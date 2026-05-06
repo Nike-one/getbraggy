@@ -527,6 +527,112 @@
     }
     .results-actions button:hover { background: var(--ink); color: var(--cream); }
 
+    /* FEEDBACK CARD */
+    .feedback-card {
+      background: white;
+      border: 1px solid rgba(22, 20, 19, 0.15);
+      border-radius: 20px;
+      padding: 1.75rem;
+      margin-top: 2rem;
+      position: relative;
+    }
+    .feedback-card.dismissed { display: none; }
+    .feedback-close {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 1.2rem;
+      cursor: pointer;
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .feedback-close:hover { background: rgba(22, 20, 19, 0.05); color: var(--ink); }
+    .feedback-label {
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--orange);
+      margin-bottom: 0.6rem;
+    }
+    .feedback-card h4 {
+      font-family: 'Instrument Serif', serif;
+      font-weight: 400;
+      font-size: 1.4rem;
+      letter-spacing: -0.01em;
+      margin-bottom: 1.1rem;
+    }
+    .stars {
+      display: flex;
+      gap: 0.4rem;
+      margin-bottom: 1.1rem;
+    }
+    .star {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1.8rem;
+      color: rgba(22, 20, 19, 0.2);
+      transition: color 0.15s, transform 0.1s;
+      padding: 0;
+      line-height: 1;
+    }
+    .star:hover { transform: scale(1.15); }
+    .star.active { color: var(--orange); }
+    .feedback-card textarea {
+      min-height: 80px;
+      font-size: 0.92rem;
+      margin-bottom: 1rem;
+    }
+    .feedback-card .brag-btn {
+      padding: 0.7rem 1.4rem;
+      font-size: 0.92rem;
+    }
+    .feedback-thanks {
+      display: none;
+      text-align: center;
+      padding: 1.5rem 0;
+    }
+    .feedback-thanks.show { display: block; }
+    .feedback-thanks-icon {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+    .feedback-thanks-text {
+      font-family: 'Instrument Serif', serif;
+      font-size: 1.3rem;
+    }
+
+    /* LIMIT REACHED STATE */
+    .limit-reached {
+      display: none;
+      background: white;
+      border: 1px solid var(--ink);
+      border-radius: 24px;
+      padding: 3rem 2rem;
+      text-align: center;
+      box-shadow: 6px 6px 0 var(--ink);
+    }
+    .limit-reached.show { display: block; }
+    .limit-reached h2 {
+      font-family: 'Instrument Serif', serif;
+      font-size: 2rem;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.7rem;
+    }
+    .limit-reached p {
+      color: var(--muted);
+      max-width: 38ch;
+      margin: 0 auto 1.5rem;
+      line-height: 1.55;
+    }
+
     .capacity {
       display: none;
       background: white;
@@ -760,8 +866,49 @@
           <div class="big-fix-text" id="big-fix-text"></div>
         </div>
 
-        <div class="results-actions">
-          <button onclick="reset()">Try another résumé</button>
+        <div class="feedback-card" id="feedback-card">
+          <button class="feedback-close" onclick="dismissFeedback()" aria-label="Dismiss">×</button>
+          <div id="feedback-form-inner">
+            <div class="feedback-label">Quick feedback</div>
+            <h4>Was this useful?</h4>
+            <div class="stars" id="stars" role="radiogroup" aria-label="Rating">
+              <button class="star" data-value="1" onclick="setRating(1)" aria-label="1 star">★</button>
+              <button class="star" data-value="2" onclick="setRating(2)" aria-label="2 stars">★</button>
+              <button class="star" data-value="3" onclick="setRating(3)" aria-label="3 stars">★</button>
+              <button class="star" data-value="4" onclick="setRating(4)" aria-label="4 stars">★</button>
+              <button class="star" data-value="5" onclick="setRating(5)" aria-label="5 stars">★</button>
+            </div>
+            <textarea id="feedback-text" placeholder="What worked? What didn't? (optional)"></textarea>
+            <button class="brag-btn" id="feedback-submit" onclick="submitFeedback()">Send feedback</button>
+          </div>
+          <div class="feedback-thanks" id="feedback-thanks">
+            <div class="feedback-thanks-icon">🙏</div>
+            <div class="feedback-thanks-text">Thanks — really appreciate it.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="limit-reached" id="limit-reached-state">
+        <h2>You've used your free analysis</h2>
+        <p>One per email — that's the deal while we're in pre-launch. We'll email you when more credits open up.</p>
+        <div class="feedback-card" style="margin-top: 0; box-shadow: none; padding: 1.5rem; border-radius: 16px;">
+          <div id="limit-feedback-form-inner">
+            <div class="feedback-label">While you're here</div>
+            <h4>How was your analysis?</h4>
+            <div class="stars" id="limit-stars" role="radiogroup" aria-label="Rating">
+              <button class="star" data-value="1" onclick="setLimitRating(1)" aria-label="1 star">★</button>
+              <button class="star" data-value="2" onclick="setLimitRating(2)" aria-label="2 stars">★</button>
+              <button class="star" data-value="3" onclick="setLimitRating(3)" aria-label="3 stars">★</button>
+              <button class="star" data-value="4" onclick="setLimitRating(4)" aria-label="4 stars">★</button>
+              <button class="star" data-value="5" onclick="setLimitRating(5)" aria-label="5 stars">★</button>
+            </div>
+            <textarea id="limit-feedback-text" placeholder="What worked? What didn't? (optional)"></textarea>
+            <button class="brag-btn" onclick="submitLimitFeedback()">Send feedback</button>
+          </div>
+          <div class="feedback-thanks" id="limit-feedback-thanks">
+            <div class="feedback-thanks-icon">🙏</div>
+            <div class="feedback-thanks-text">Thanks — really appreciate it.</div>
+          </div>
         </div>
       </div>
     </section>
@@ -803,6 +950,10 @@
     const SUPABASE_URL = 'https://vibklatozzpbyqcljzxv.supabase.co';
     const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpYmtsYXRvenpwYnlxY2xqenh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwMDkwOTcsImV4cCI6MjA5MzU4NTA5N30.SJxrmZJtGJJDhk40sqy0EwzilIdSYqV3ts25uliUPfg';
 
+    let currentEmail = '';
+    let currentRating = 0;
+    let limitRating = 0;
+
     function showError(msg) {
       const el = document.getElementById('error-msg');
       el.textContent = msg;
@@ -826,6 +977,7 @@
         return;
       }
 
+      currentEmail = email;
       btn.disabled = true;
       btn.textContent = 'Reading...';
       document.getElementById('form-state').style.display = 'none';
@@ -840,6 +992,12 @@
         });
 
         document.getElementById('loading-state').classList.remove('show');
+
+        if (res.status === 429) {
+          // Limit reached — show feedback + waitlist screen
+          document.getElementById('limit-reached-state').classList.add('show');
+          return;
+        }
 
         if (res.status === 503) {
           document.getElementById('capacity-state').classList.add('show');
@@ -929,13 +1087,80 @@
       }[c]));
     }
 
-    function reset() {
-      document.getElementById('results-state').classList.remove('show');
-      document.getElementById('form-state').style.display = 'block';
-      document.getElementById('submit-btn').disabled = false;
-      document.getElementById('submit-btn').textContent = 'Brag me →';
-      document.getElementById('resume').value = '';
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+    function setRating(value) {
+      currentRating = value;
+      document.querySelectorAll('#stars .star').forEach(s => {
+        s.classList.toggle('active', parseInt(s.dataset.value) <= value);
+      });
+    }
+
+    function setLimitRating(value) {
+      limitRating = value;
+      document.querySelectorAll('#limit-stars .star').forEach(s => {
+        s.classList.toggle('active', parseInt(s.dataset.value) <= value);
+      });
+    }
+
+    function dismissFeedback() {
+      document.getElementById('feedback-card').classList.add('dismissed');
+    }
+
+    async function submitFeedback() {
+      if (!currentRating) {
+        alert('Please pick a rating (1-5 stars) first.');
+        return;
+      }
+      const comment = document.getElementById('feedback-text').value.trim();
+      const btn = document.getElementById('feedback-submit');
+      btn.disabled = true;
+      btn.textContent = 'Sending...';
+
+      try {
+        await fetch(`${SUPABASE_URL}/rest/v1/feedback`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_ANON,
+            'Authorization': `Bearer ${SUPABASE_ANON}`,
+            'Prefer': 'return=minimal',
+          },
+          body: JSON.stringify({
+            email: currentEmail,
+            rating: currentRating,
+            comment: comment || null,
+          }),
+        });
+      } catch {}
+
+      document.getElementById('feedback-form-inner').style.display = 'none';
+      document.getElementById('feedback-thanks').classList.add('show');
+    }
+
+    async function submitLimitFeedback() {
+      if (!limitRating) {
+        alert('Please pick a rating (1-5 stars) first.');
+        return;
+      }
+      const comment = document.getElementById('limit-feedback-text').value.trim();
+      try {
+        await fetch(`${SUPABASE_URL}/rest/v1/feedback`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_ANON,
+            'Authorization': `Bearer ${SUPABASE_ANON}`,
+            'Prefer': 'return=minimal',
+          },
+          body: JSON.stringify({
+            email: currentEmail || document.getElementById('email').value.trim(),
+            rating: limitRating,
+            comment: comment || null,
+          }),
+        });
+      } catch {}
+
+      document.getElementById('limit-feedback-form-inner').style.display = 'none';
+      document.getElementById('limit-feedback-thanks').classList.add('show');
     }
 
     async function joinWaitlist() {

@@ -100,24 +100,55 @@ export default async function handler(req) {
     );
   }
 
-  // Save user to Supabase (fire and forget — don't block on this)
+  // CHECK USAGE LIMIT — before spending Anthropic credits
+  // Free tier: 1 analysis per email
   try {
-    await fetch(`${process.env.SUPABASE_URL}/rest/v1/users`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': process.env.SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
-        'Prefer': 'resolution=merge-duplicates',
-      },
-      body: JSON.stringify({
-        email,
-        last_used_at: new Date().toISOString(),
-      }),
-    });
+    const checkRes = await fetch(
+      `${process.env.SUPABASE_URL}/rest/v1/users?email=eq.${encodeURIComponent(email)}&select=uses_count`,
+      {
+        headers: {
+          'apikey': process.env.SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
+        },
+      }
+    );
+    if (checkRes.ok) {
+      const rows = await checkRes.json();
+      if (rows.length > 0 && rows[0].uses_count >= 1) {
+        return new Response(
+          JSON.stringify({
+            error: 'limit_reached',
+            message: "You've already used your free analysis. We'll let you know when more credits open up.",
+          }),
+          { status: 429, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+    }
   } catch (e) {
-    // Don't block the user if Supabase write fails
-    console.error('supabase write failed', e);
+    console.error('usage check failed', e);
+    // If check fails, allow request — don't block the user
+  }
+
+  // Save user to Supabase via RPC — atomically inserts or increments uses_count
+  try {
+    const supaRes = await fetch(
+      `${process.env.SUPABASE_URL}/rest/v1/rpc/increment_user_uses`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': process.env.SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ user_email: email }),
+      }
+    );
+    if (!supaRes.ok) {
+      const errBody = await supaRes.text();
+      console.error('supabase rpc failed', supaRes.status, errBody);
+    }
+  } catch (e) {
+    console.error('supabase rpc threw', e);
   }
 
   // Call Anthropic
