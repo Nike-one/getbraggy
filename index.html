@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Braggy — Your résumé says 'worked on'. Hiring managers want 'caused 32%'.</title>
-  <meta name="description" content="Paste your résumé. Get a score, sharper bullets, and the skills worth learning next — ranked by salary impact. Free for the first 100 people." />
-  <meta property="og:title" content="Braggy" />
-  <meta property="og:description" content="Your résumé says 'worked on'. Hiring managers want 'caused 32%'." />
+  <title>Braggy — The opposite of every other résumé tool.</title>
+  <meta name="description" content="We don't write your résumé for you. We tell you what's wrong with it. Paste your résumé, get an honest score, sharper bullets, and skill gaps ranked by salary impact." />
+  <meta property="og:title" content="Braggy — The opposite of every other résumé tool." />
+  <meta property="og:description" content="We don't write your résumé for you. We tell you what's wrong with it." />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🎯%3C/text%3E%3C/svg%3E" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -124,14 +124,27 @@
     h1 {
       font-family: 'Instrument Serif', serif;
       font-weight: 400;
-      font-size: clamp(2.4rem, 6.5vw, 5rem);
+      font-size: clamp(2.6rem, 7.5vw, 5.5rem);
       line-height: 1;
       letter-spacing: -0.022em;
-      margin-bottom: 1.75rem;
-      max-width: 22ch;
+      margin-bottom: 1.25rem;
+      max-width: 18ch;
     }
     h1 .quote { font-style: italic; color: var(--muted); }
     h1 .accent { font-style: italic; color: var(--orange); }
+
+    .hero-sub {
+      font-family: 'Instrument Serif', serif;
+      font-size: clamp(1.25rem, 2.2vw, 1.65rem);
+      line-height: 1.4;
+      color: var(--ink-soft);
+      margin-bottom: 2rem;
+      max-width: 38ch;
+    }
+    .hero-sub em {
+      font-style: italic;
+      color: var(--orange);
+    }
 
     .what-you-get {
       background: white;
@@ -650,14 +663,16 @@
     <section class="hero">
       <div class="eyebrow">A résumé tool that doesn't lie to you</div>
       <h1>
-        Your résumé says <span class="quote">'worked on'</span>.<br>
-        Hiring managers want <span class="accent">'caused 32%'</span>.
+        The <span class="accent">opposite</span> of every other résumé tool.
       </h1>
+      <p class="hero-sub">
+        We don't write your résumé for you. We tell you what's <em>wrong</em> with it.
+      </p>
 
       <div class="what-you-get">
         <h3>Paste your résumé. Get back:</h3>
         <ul class="what-list">
-          <li><span><strong>A score out of 100</strong> — honest, not flattering. So you know where you stand.</span></li>
+          <li><span><strong>An honest score out of 100</strong> — no flattery. So you know exactly where you stand.</span></li>
           <li><span><strong>Your weak bullets, rewritten</strong> — with real numbers and outcomes, not corporate fluff.</span></li>
           <li><span><strong>Skills worth learning next</strong> — ranked by how much they could raise your salary.</span></li>
         </ul>
