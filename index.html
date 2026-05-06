@@ -3,14 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Get Braggy — Your résumé isn't doing you justice.</title>
-  <meta name="description" content="Paste your résumé. Walk out with the brag points hiring managers actually pay for — plus the skills worth learning for your next big raise." />
-  <meta property="og:title" content="Get Braggy" />
-  <meta property="og:description" content="Stop being modest. Start getting paid." />
-  <meta property="og:type" content="website" />
+  <title>Braggy — Your résumé says 'worked on'. Hiring managers want 'caused 32%'.</title>
+  <meta name="description" content="Paste your résumé. Get a score, sharper bullets, and the skills worth learning next — ranked by salary impact. Free for the first 100 people." />
+  <meta property="og:title" content="Braggy" />
+  <meta property="og:description" content="Your résumé says 'worked on'. Hiring managers want 'caused 32%'." />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🎯%3C/text%3E%3C/svg%3E" />
 
-  <!-- Fonts: Instrument Serif (display) + Geist (body) -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -24,10 +22,10 @@
       --orange: #E8541C;
       --orange-deep: #C7430F;
       --muted: #6B635C;
+      --green: #2D7A3E;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
-
     html { scroll-behavior: smooth; }
 
     body {
@@ -36,12 +34,11 @@
       font-family: 'Geist', system-ui, sans-serif;
       font-weight: 400;
       line-height: 1.5;
-      overflow-x: hidden;
       -webkit-font-smoothing: antialiased;
       position: relative;
+      min-height: 100vh;
     }
 
-    /* Subtle grain texture for editorial feel */
     body::before {
       content: '';
       position: fixed;
@@ -54,74 +51,70 @@
     }
 
     .container {
-      max-width: 1280px;
+      max-width: 1100px;
       margin: 0 auto;
       padding: 0 1.5rem;
       position: relative;
       z-index: 2;
     }
 
-    /* NAV */
-    nav {
-      padding: 1.75rem 0;
+    header {
+      padding: 1.5rem 0;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      position: relative;
-      z-index: 10;
     }
     .logo {
       font-family: 'Instrument Serif', serif;
-      font-size: 1.6rem;
+      font-size: 1.55rem;
       letter-spacing: -0.02em;
       display: flex;
       align-items: center;
       gap: 0.45rem;
     }
     .logo-dot {
-      width: 10px; height: 10px;
+      width: 9px; height: 9px;
       background: var(--orange);
       border-radius: 50%;
-      display: inline-block;
       animation: pulse 2.4s ease-in-out infinite;
     }
     @keyframes pulse {
       0%, 100% { transform: scale(1); opacity: 1; }
       50% { transform: scale(1.4); opacity: 0.7; }
     }
-    .nav-cta {
-      font-size: 0.85rem;
-      letter-spacing: 0.04em;
+    .header-tag {
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
       text-transform: uppercase;
-      color: var(--ink);
-      text-decoration: none;
-      padding: 0.55rem 1.1rem;
-      border: 1px solid var(--ink);
-      border-radius: 999px;
-      transition: all 0.2s;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
-    .nav-cta:hover {
-      background: var(--ink);
-      color: var(--cream);
+    .live-dot {
+      width: 6px; height: 6px;
+      background: var(--green);
+      border-radius: 50%;
+      box-shadow: 0 0 0 0 rgba(45, 122, 62, 0.5);
+      animation: live 2s ease-in-out infinite;
+    }
+    @keyframes live {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(45, 122, 62, 0.5); }
+      50% { box-shadow: 0 0 0 6px rgba(45, 122, 62, 0); }
     }
 
-    /* HERO */
-    .hero {
-      padding: 3rem 0 5rem;
-      position: relative;
-    }
+    .hero { padding: 2.5rem 0 3rem; }
     .eyebrow {
       font-family: 'Geist Mono', monospace;
       font-size: 0.78rem;
       letter-spacing: 0.18em;
       text-transform: uppercase;
       color: var(--orange);
-      margin-bottom: 2rem;
+      margin-bottom: 1.75rem;
       display: flex;
       align-items: center;
       gap: 0.7rem;
-      opacity: 0;
-      animation: fadeUp 0.7s 0.1s forwards;
     }
     .eyebrow::before {
       content: '';
@@ -131,581 +124,825 @@
     h1 {
       font-family: 'Instrument Serif', serif;
       font-weight: 400;
-      font-size: clamp(3rem, 9vw, 7.5rem);
-      line-height: 0.95;
-      letter-spacing: -0.025em;
-      color: var(--ink);
-      margin-bottom: 2rem;
-      max-width: 14ch;
+      font-size: clamp(2.4rem, 6.5vw, 5rem);
+      line-height: 1;
+      letter-spacing: -0.022em;
+      margin-bottom: 1.75rem;
+      max-width: 22ch;
     }
-    h1 .italic {
-      font-style: italic;
-      color: var(--orange);
-    }
-    h1 .underline-art {
-      position: relative;
-      display: inline-block;
-    }
-    h1 .underline-art::after {
-      content: '';
-      position: absolute;
-      left: 0; right: 0; bottom: 0.05em;
-      height: 0.25em;
-      background: var(--orange);
-      opacity: 0.25;
-      z-index: -1;
-      transform: skewX(-6deg);
-    }
-    .hero-line-1, .hero-line-2, .hero-line-3 {
-      display: block;
-      opacity: 0;
-      animation: fadeUp 0.8s forwards;
-    }
-    .hero-line-1 { animation-delay: 0.2s; }
-    .hero-line-2 { animation-delay: 0.35s; }
-    .hero-line-3 { animation-delay: 0.5s; }
+    h1 .quote { font-style: italic; color: var(--muted); }
+    h1 .accent { font-style: italic; color: var(--orange); }
 
+    .what-you-get {
+      background: white;
+      border: 1px solid var(--ink);
+      border-radius: 18px;
+      padding: 1.5rem 1.75rem;
+      max-width: 580px;
+      margin-bottom: 2rem;
+      box-shadow: 4px 4px 0 var(--ink);
+    }
+    .what-you-get h3 {
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 1rem;
+      font-weight: 500;
+    }
+    .what-list {
+      list-style: none;
+      counter-reset: item;
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+    }
+    .what-list li {
+      counter-increment: item;
+      display: flex;
+      gap: 0.85rem;
+      align-items: flex-start;
+      font-size: 1rem;
+      line-height: 1.45;
+    }
+    .what-list li::before {
+      content: counter(item);
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--orange);
+      background: rgba(232, 84, 28, 0.1);
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+      font-weight: 500;
+    }
+    .what-list strong { font-weight: 600; }
+
+    .app { padding: 1rem 0 4rem; }
+    .form-card {
+      background: white;
+      border: 1px solid var(--ink);
+      border-radius: 24px;
+      padding: 2rem;
+      box-shadow: 6px 6px 0 var(--ink);
+    }
+    .form-step {
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--orange);
+      margin-bottom: 0.75rem;
+    }
+    .form-card label {
+      display: block;
+      font-size: 1.05rem;
+      font-weight: 500;
+      margin-bottom: 0.85rem;
+      color: var(--ink);
+    }
+    .form-card label small {
+      font-weight: 400;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+    textarea {
+      width: 100%;
+      min-height: 280px;
+      border: 1px solid rgba(22, 20, 19, 0.18);
+      border-radius: 12px;
+      padding: 1rem 1.1rem;
+      font-family: 'Geist', sans-serif;
+      font-size: 0.95rem;
+      line-height: 1.55;
+      color: var(--ink);
+      background: var(--cream);
+      resize: vertical;
+      transition: border-color 0.15s;
+    }
+    textarea:focus { outline: none; border-color: var(--ink); }
+    .form-divider {
+      height: 1px;
+      background: rgba(22, 20, 19, 0.1);
+      margin: 1.75rem 0;
+    }
+    input[type="email"] {
+      width: 100%;
+      border: 1px solid rgba(22, 20, 19, 0.18);
+      border-radius: 12px;
+      padding: 0.95rem 1.1rem;
+      font-family: 'Geist', sans-serif;
+      font-size: 1rem;
+      color: var(--ink);
+      background: var(--cream);
+      transition: border-color 0.15s;
+    }
+    input[type="email"]:focus { outline: none; border-color: var(--ink); }
+    .submit-row {
+      margin-top: 1.5rem;
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    button.brag-btn {
+      background: var(--ink);
+      color: var(--cream);
+      border: none;
+      padding: 1rem 2rem;
+      font-family: 'Geist', sans-serif;
+      font-weight: 500;
+      font-size: 1.05rem;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all 0.18s;
+    }
+    button.brag-btn:hover:not(:disabled) {
+      background: var(--orange);
+      transform: translateX(2px);
+    }
+    button.brag-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .micro {
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+    .error-msg {
+      display: none;
+      background: rgba(232, 84, 28, 0.1);
+      border: 1px solid var(--orange);
+      color: var(--orange-deep);
+      padding: 0.85rem 1.1rem;
+      border-radius: 10px;
+      margin-top: 1rem;
+      font-size: 0.9rem;
+      line-height: 1.45;
+    }
+    .error-msg.show { display: block; }
+
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 4rem 1rem;
+    }
+    .loading.show { display: block; }
+    .loading-spinner {
+      width: 36px; height: 36px;
+      border: 3px solid rgba(22, 20, 19, 0.15);
+      border-top-color: var(--orange);
+      border-radius: 50%;
+      margin: 0 auto 1.5rem;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-msg {
+      font-family: 'Instrument Serif', serif;
+      font-size: 1.5rem;
+      margin-bottom: 0.4rem;
+    }
+    .loading-sub {
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.78rem;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    .results { display: none; animation: fadeUp 0.5s ease; }
+    .results.show { display: block; }
     @keyframes fadeUp {
       from { opacity: 0; transform: translateY(20px); }
       to { opacity: 1; transform: translateY(0); }
     }
 
-    .lede {
-      font-size: clamp(1.05rem, 1.6vw, 1.25rem);
-      max-width: 52ch;
-      color: var(--ink-soft);
-      margin-bottom: 2.75rem;
-      line-height: 1.55;
-      opacity: 0;
-      animation: fadeUp 0.8s 0.65s forwards;
+    .results-header { margin-bottom: 2.5rem; }
+    .results-eyebrow {
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--orange);
+      margin-bottom: 0.8rem;
+    }
+    .results-title {
+      font-family: 'Instrument Serif', serif;
+      font-size: clamp(2rem, 4.5vw, 3rem);
+      line-height: 1.05;
+      letter-spacing: -0.02em;
     }
 
-    /* WAITLIST FORM */
-    .waitlist {
-      display: flex;
-      gap: 0.5rem;
-      max-width: 460px;
-      background: white;
-      padding: 0.4rem;
-      border-radius: 999px;
-      box-shadow: 0 2px 0 var(--ink);
-      border: 1px solid var(--ink);
-      opacity: 0;
-      animation: fadeUp 0.8s 0.8s forwards;
-    }
-    .waitlist input {
-      flex: 1;
-      border: none;
-      outline: none;
-      background: transparent;
-      padding: 0.85rem 1.1rem;
-      font-family: 'Geist', sans-serif;
-      font-size: 1rem;
-      color: var(--ink);
-    }
-    .waitlist input::placeholder { color: var(--muted); }
-    .waitlist button {
+    .score-card {
       background: var(--ink);
       color: var(--cream);
-      border: none;
-      padding: 0.85rem 1.6rem;
+      border-radius: 24px;
+      padding: 2.5rem;
+      margin-bottom: 2.5rem;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 2.5rem;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .score-card::before {
+      content: '';
+      position: absolute;
+      top: -30%; right: -10%;
+      width: 50%; height: 160%;
+      background: radial-gradient(circle, rgba(232, 84, 28, 0.18), transparent 60%);
+      pointer-events: none;
+    }
+    .score-num {
+      font-family: 'Instrument Serif', serif;
+      font-size: clamp(5rem, 12vw, 8rem);
+      line-height: 0.9;
+      letter-spacing: -0.04em;
+      position: relative;
+      z-index: 2;
+    }
+    .score-num .out-of {
+      font-size: 0.3em;
+      color: var(--muted);
+      margin-left: 0.2em;
+    }
+    .score-text { position: relative; z-index: 2; }
+    .score-label {
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.75rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--orange);
+      margin-bottom: 0.7rem;
+    }
+    .score-reason {
+      font-family: 'Instrument Serif', serif;
+      font-size: 1.4rem;
+      line-height: 1.3;
+    }
+
+    .section-title {
+      font-family: 'Instrument Serif', serif;
+      font-weight: 400;
+      font-size: 1.85rem;
+      letter-spacing: -0.015em;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+    }
+    .section-title::before {
+      content: '';
+      width: 28px; height: 2px;
+      background: var(--orange);
+    }
+
+    .rewrite-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+      margin-bottom: 3rem;
+    }
+    .rewrite {
+      background: white;
+      border: 1px solid rgba(22, 20, 19, 0.12);
+      border-radius: 16px;
+      padding: 1.5rem;
+    }
+    .rewrite-row {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+    .rewrite-half h4 {
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      margin-bottom: 0.6rem;
+    }
+    .rewrite-half.before h4 { color: var(--muted); }
+    .rewrite-half.after h4 { color: var(--orange); }
+    .rewrite-half p { font-size: 0.98rem; line-height: 1.5; }
+    .rewrite-half.before p { color: var(--muted); font-style: italic; }
+    .rewrite-arrow { display: none; }
+
+    .skill-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+      margin-bottom: 3rem;
+    }
+    .skill {
+      background: white;
+      border: 1px solid rgba(22, 20, 19, 0.12);
+      border-radius: 14px;
+      padding: 1.25rem 1.4rem;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 1.1rem;
+      align-items: center;
+    }
+    .skill-rank {
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.85rem;
+      color: var(--orange);
+      background: rgba(232, 84, 28, 0.08);
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 500;
+    }
+    .skill-name { font-weight: 500; font-size: 1.05rem; margin-bottom: 0.2rem; }
+    .skill-why { font-size: 0.88rem; color: var(--muted); line-height: 1.45; }
+    .skill-lift {
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.8rem;
+      color: var(--green);
+      background: rgba(45, 122, 62, 0.08);
+      padding: 0.4rem 0.7rem;
+      border-radius: 999px;
+      white-space: nowrap;
+      font-weight: 500;
+    }
+
+    .big-fix {
+      background: var(--orange);
+      color: white;
+      border-radius: 20px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+    }
+    .big-fix-label {
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      opacity: 0.85;
+      margin-bottom: 0.7rem;
+    }
+    .big-fix-text {
+      font-family: 'Instrument Serif', serif;
+      font-size: clamp(1.5rem, 3.5vw, 2.2rem);
+      line-height: 1.15;
+      letter-spacing: -0.01em;
+    }
+
+    .results-actions {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-top: 2rem;
+    }
+    .results-actions button {
+      background: transparent;
+      color: var(--ink);
+      border: 1px solid var(--ink);
+      padding: 0.85rem 1.5rem;
       font-family: 'Geist', sans-serif;
       font-weight: 500;
       font-size: 0.95rem;
       border-radius: 999px;
       cursor: pointer;
-      transition: all 0.2s;
-      white-space: nowrap;
+      transition: all 0.15s;
     }
-    .waitlist button:hover {
-      background: var(--orange);
-      transform: translateX(2px);
-    }
-    .waitlist-note {
-      font-family: 'Geist', sans-serif;
-      font-size: 0.82rem;
-      color: var(--muted);
-      margin-top: 1.1rem;
-      display: flex;
-      align-items: center;
-      gap: 0.7rem;
-      flex-wrap: wrap;
-      opacity: 0;
-      animation: fadeUp 0.8s 0.95s forwards;
-    }
-    .waitlist-note .badge {
-      font-family: 'Geist Mono', monospace;
-      font-size: 0.7rem;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--orange);
-      background: rgba(232, 84, 28, 0.1);
-      padding: 0.3rem 0.65rem;
-      border-radius: 999px;
-      font-weight: 500;
-    }
-    .waitlist-note .dot-sep {
-      width: 3px; height: 3px;
-      background: var(--muted);
-      border-radius: 50%;
-      display: inline-block;
-    }
+    .results-actions button:hover { background: var(--ink); color: var(--cream); }
 
-    .success-msg {
+    .capacity {
       display: none;
-      padding: 1rem 1.4rem;
-      background: var(--ink);
-      color: var(--cream);
-      border-radius: 999px;
-      max-width: 460px;
-      font-size: 0.95rem;
-    }
-    .success-msg.show { display: block; }
-
-    /* MARQUEE */
-    .marquee-section {
-      padding: 3rem 0;
-      border-top: 1px solid rgba(22, 20, 19, 0.12);
-      border-bottom: 1px solid rgba(22, 20, 19, 0.12);
-      overflow: hidden;
-      background: var(--cream-deep);
-    }
-    .marquee {
-      display: flex;
-      gap: 3rem;
-      animation: scroll 30s linear infinite;
-      white-space: nowrap;
-      width: max-content;
-    }
-    .marquee span {
-      font-family: 'Instrument Serif', serif;
-      font-style: italic;
-      font-size: clamp(1.5rem, 3vw, 2.4rem);
-      color: var(--ink);
-    }
-    .marquee span.accent { color: var(--orange); }
-    .marquee .dot {
-      align-self: center;
-      width: 8px; height: 8px;
-      background: var(--ink);
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
-    @keyframes scroll {
-      from { transform: translateX(0); }
-      to { transform: translateX(-50%); }
-    }
-
-    /* HOW IT WORKS */
-    .how {
-      padding: 7rem 0 5rem;
-    }
-    .section-label {
-      font-family: 'Geist Mono', monospace;
-      font-size: 0.78rem;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 1.25rem;
-    }
-    h2 {
-      font-family: 'Instrument Serif', serif;
-      font-weight: 400;
-      font-size: clamp(2.25rem, 5vw, 3.75rem);
-      line-height: 1.05;
-      letter-spacing: -0.02em;
-      max-width: 18ch;
-      margin-bottom: 4rem;
-    }
-    h2 em { color: var(--orange); }
-
-    .steps {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 2.5rem;
-    }
-    .step {
-      position: relative;
-      padding-top: 2rem;
-      border-top: 1px solid var(--ink);
-    }
-    .step-num {
-      font-family: 'Geist Mono', monospace;
-      font-size: 0.78rem;
-      letter-spacing: 0.1em;
-      color: var(--orange);
-      margin-bottom: 1.25rem;
-    }
-    .step h3 {
-      font-family: 'Instrument Serif', serif;
-      font-weight: 400;
-      font-size: 1.85rem;
-      line-height: 1.1;
-      margin-bottom: 0.85rem;
-      letter-spacing: -0.01em;
-    }
-    .step p {
-      color: var(--ink-soft);
-      font-size: 0.98rem;
-      line-height: 1.55;
-    }
-
-    /* SAMPLE OUTPUT */
-    .sample {
-      padding: 5rem 0 6rem;
-    }
-    .sample-card {
       background: white;
       border: 1px solid var(--ink);
       border-radius: 24px;
-      padding: 2.5rem;
+      padding: 3rem 2rem;
+      text-align: center;
       box-shadow: 6px 6px 0 var(--ink);
-      max-width: 920px;
-      margin: 0 auto;
+    }
+    .capacity.show { display: block; }
+    .capacity h2 {
+      font-family: 'Instrument Serif', serif;
+      font-size: 2rem;
+      letter-spacing: -0.02em;
+      margin-bottom: 1rem;
+    }
+    .capacity p {
+      color: var(--muted);
+      max-width: 36ch;
+      margin: 0 auto 1.5rem;
+      line-height: 1.55;
+    }
+
+    footer {
+      background: var(--ink);
+      color: var(--cream);
+      padding: 4rem 0 2rem;
+      margin-top: 5rem;
       position: relative;
+      z-index: 2;
     }
-    .sample-grid {
+    .footer-grid {
       display: grid;
-      grid-template-columns: 1fr auto 1fr;
-      gap: 2rem;
-      align-items: stretch;
+      grid-template-columns: 1.5fr 1fr 1fr;
+      gap: 3rem;
+      margin-bottom: 3rem;
+      padding-bottom: 2.5rem;
+      border-bottom: 1px solid rgba(242, 237, 228, 0.15);
     }
-    .sample-col h4 {
+    .footer-brand .logo { color: var(--cream); margin-bottom: 1rem; }
+    .footer-brand p {
+      color: rgba(242, 237, 228, 0.65);
+      font-size: 0.92rem;
+      line-height: 1.55;
+      max-width: 32ch;
+    }
+    .footer-col h5 {
       font-family: 'Geist Mono', monospace;
       font-size: 0.72rem;
       letter-spacing: 0.18em;
       text-transform: uppercase;
-      margin-bottom: 1rem;
+      color: rgba(242, 237, 228, 0.5);
+      margin-bottom: 1.1rem;
+      font-weight: 500;
     }
-    .sample-col.before h4 { color: var(--muted); }
-    .sample-col.after h4 { color: var(--orange); }
-    .sample-col p {
-      font-family: 'Instrument Serif', serif;
-      font-size: 1.25rem;
-      line-height: 1.4;
-    }
-    .sample-col.before p { color: var(--muted); font-style: italic; }
-    .sample-col.after p { color: var(--ink); }
-    .sample-arrow {
+    .footer-col ul {
+      list-style: none;
       display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.5rem;
-      color: var(--orange);
+      flex-direction: column;
+      gap: 0.65rem;
     }
-    .sample-meta {
-      font-family: 'Geist Mono', monospace;
-      font-size: 0.75rem;
-      color: var(--muted);
-      margin-top: 1.5rem;
-      padding-top: 1.5rem;
-      border-top: 1px dashed rgba(22, 20, 19, 0.2);
-      display: flex;
-      gap: 1.5rem;
-      flex-wrap: wrap;
-    }
-    .sample-meta strong { color: var(--orange); }
-
-    /* PROOF */
-    .proof {
-      padding: 6rem 0;
-      background: var(--ink);
+    .footer-col a {
       color: var(--cream);
-      position: relative;
-      overflow: hidden;
+      text-decoration: none;
+      font-size: 0.92rem;
+      transition: color 0.15s;
     }
-    .proof::before {
-      content: '';
-      position: absolute;
-      top: -50%; right: -20%;
-      width: 60%; height: 200%;
-      background: radial-gradient(circle, rgba(232, 84, 28, 0.18), transparent 60%);
-      pointer-events: none;
-    }
-    .proof-quote {
-      font-family: 'Instrument Serif', serif;
-      font-size: clamp(2rem, 4.5vw, 3.4rem);
-      line-height: 1.15;
-      letter-spacing: -0.02em;
-      max-width: 22ch;
-      margin: 0 auto;
-      text-align: center;
-      position: relative;
-      z-index: 2;
-    }
-    .proof-quote em { color: var(--orange); font-style: italic; }
-    .proof-quote::before {
-      content: '"';
-      font-size: 5rem;
-      line-height: 0.5;
-      color: var(--orange);
-      display: block;
-      margin-bottom: 1rem;
-    }
-    .proof-attr {
-      font-family: 'Geist Mono', monospace;
-      font-size: 0.8rem;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      text-align: center;
-      margin-top: 2.5rem;
-      opacity: 0.6;
-    }
-
-    /* FINAL CTA */
-    .final-cta {
-      padding: 7rem 0 8rem;
-      text-align: center;
-      position: relative;
-    }
-    .final-cta h2 {
-      margin-left: auto;
-      margin-right: auto;
-      max-width: 16ch;
-      margin-bottom: 3rem;
-    }
-    .final-cta .waitlist {
-      margin: 0 auto;
-    }
-
-    /* FOOTER */
-    footer {
-      padding: 2rem 0 3rem;
-      border-top: 1px solid rgba(22, 20, 19, 0.12);
+    .footer-col a:hover { color: var(--orange); }
+    .footer-bottom {
       display: flex;
       justify-content: space-between;
       align-items: center;
       flex-wrap: wrap;
       gap: 1rem;
       font-family: 'Geist Mono', monospace;
-      font-size: 0.8rem;
-      color: var(--muted);
-    }
-    footer a { color: var(--muted); text-decoration: none; }
-    footer a:hover { color: var(--orange); }
-
-    /* RESPONSIVE */
-    @media (max-width: 768px) {
-      .hero { padding: 2rem 0 4rem; }
-      h1 { max-width: 100%; font-size: clamp(2.6rem, 12vw, 4.5rem); }
-      .lede { font-size: 1rem; }
-      .steps { grid-template-columns: 1fr; gap: 2.5rem; }
-      .waitlist { flex-direction: column; border-radius: 18px; padding: 0.5rem; }
-      .waitlist input { padding: 0.85rem 1rem; }
-      .waitlist button { border-radius: 14px; }
-      .nav-cta { font-size: 0.75rem; padding: 0.45rem 0.9rem; }
-      .proof { padding: 4.5rem 0; }
-      .how { padding: 5rem 0 3rem; }
-      .final-cta { padding: 5rem 0 6rem; }
-      .sample { padding: 3rem 0 4rem; }
-      .sample-card { padding: 1.75rem; box-shadow: 4px 4px 0 var(--ink); }
-      .sample-grid { grid-template-columns: 1fr; gap: 1.25rem; }
-      .sample-arrow { transform: rotate(90deg); }
-      .sample-col p { font-size: 1.1rem; }
+      font-size: 0.78rem;
+      color: rgba(242, 237, 228, 0.5);
     }
 
-    /* A11Y utilities */
-    .sr-only {
-      position: absolute;
-      width: 1px; height: 1px;
-      padding: 0; margin: -1px;
-      overflow: hidden;
-      clip: rect(0, 0, 0, 0);
-      white-space: nowrap;
-      border: 0;
+    @media (min-width: 720px) {
+      .rewrite-row {
+        grid-template-columns: 1fr 32px 1fr;
+        gap: 1.5rem;
+        align-items: start;
+      }
+      .rewrite-arrow {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.4rem;
+        color: var(--orange);
+        padding-top: 1.6rem;
+      }
     }
-    input:focus-visible, button:focus-visible, a:focus-visible {
-      outline: 2px solid var(--orange);
-      outline-offset: 3px;
-    }
-    .waitlist:focus-within {
-      box-shadow: 0 2px 0 var(--ink), 0 0 0 3px rgba(232, 84, 28, 0.25);
+    @media (max-width: 720px) {
+      .score-card {
+        grid-template-columns: 1fr;
+        text-align: center;
+        padding: 2rem 1.5rem;
+        gap: 1rem;
+      }
+      .form-card { padding: 1.5rem; }
+      .footer-grid { grid-template-columns: 1fr; gap: 2rem; }
+      .skill { grid-template-columns: auto 1fr; }
+      .skill-lift {
+        grid-column: 1 / -1;
+        justify-self: start;
+        margin-top: 0.3rem;
+      }
     }
 
+    *:focus-visible { outline: 2px solid var(--orange); outline-offset: 3px; }
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after {
         animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
       }
-      .marquee { animation: none; }
-      .logo-dot { animation: none; }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <nav>
+    <header>
       <div class="logo">
         <span class="logo-dot"></span>
         <span>Braggy</span>
       </div>
-      <a href="#waitlist" class="nav-cta">Join waitlist</a>
-    </nav>
+      <div class="header-tag">
+        <span class="live-dot"></span>
+        <span>Free for first 100</span>
+      </div>
+    </header>
 
     <section class="hero">
-      <div class="eyebrow">Coming soon · Built for ambitious people</div>
+      <div class="eyebrow">A résumé tool that doesn't lie to you</div>
       <h1>
-        <span class="hero-line-1">Your résumé</span>
-        <span class="hero-line-2">isn't doing you</span>
-        <span class="hero-line-3"><span class="italic">justice.</span></span>
+        Your résumé says <span class="quote">'worked on'</span>.<br>
+        Hiring managers want <span class="accent">'caused 32%'</span>.
       </h1>
-      <p class="lede">
-        Paste it in. Walk out with the brag points hiring managers actually pay for — plus the skills worth learning for your next 40% raise. No more selling yourself short.
-      </p>
 
-      <form class="waitlist" id="waitlist" onsubmit="handleSubmit(event)">
-        <label for="email-1" class="sr-only">Email address</label>
-        <input type="email" id="email-1" name="email" placeholder="your@email.com" required autocomplete="email" />
-        <button type="submit">Get early access →</button>
-      </form>
-      <div class="success-msg" id="success">You're in. We'll email you the moment Braggy is live. 🎯</div>
-      <div class="waitlist-note">
-        <span class="badge">Free for first 100</span>
-        <span class="dot-sep"></span>
-        <span>Your résumé stays private. Never sold. Never shared.</span>
+      <div class="what-you-get">
+        <h3>Paste your résumé. Get back:</h3>
+        <ul class="what-list">
+          <li><span><strong>A score out of 100</strong> — honest, not flattering. So you know where you stand.</span></li>
+          <li><span><strong>Your weak bullets, rewritten</strong> — with real numbers and outcomes, not corporate fluff.</span></li>
+          <li><span><strong>Skills worth learning next</strong> — ranked by how much they could raise your salary.</span></li>
+        </ul>
       </div>
     </section>
-  </div>
 
-  <section class="marquee-section">
-    <div class="marquee">
-      <span>Stop being humble.</span>
-      <span class="dot"></span>
-      <span class="accent"><em>Get braggy.</em></span>
-      <span class="dot"></span>
-      <span>Stop being humble.</span>
-      <span class="dot"></span>
-      <span class="accent"><em>Get braggy.</em></span>
-      <span class="dot"></span>
-      <span>Stop being humble.</span>
-      <span class="dot"></span>
-      <span class="accent"><em>Get braggy.</em></span>
-      <span class="dot"></span>
-      <span>Stop being humble.</span>
-      <span class="dot"></span>
-      <span class="accent"><em>Get braggy.</em></span>
-    </div>
-  </section>
+    <section class="app" id="app-section">
+      <div class="form-card" id="form-state">
+        <div class="form-step">Step 1 of 1</div>
+        <label for="resume">
+          Paste your résumé below
+          <small>· The whole thing. Bullets, job titles, education — everything.</small>
+        </label>
+        <textarea
+          id="resume"
+          placeholder="Paste your résumé here. Don't worry about formatting — we'll figure it out."
+          aria-label="Your résumé text"
+        ></textarea>
 
-  <div class="container">
-    <section class="how">
-      <div class="section-label">How it works</div>
-      <h2>Three steps between <em>modest you</em> and the offer you deserve.</h2>
+        <div class="form-divider"></div>
 
-      <div class="steps">
-        <div class="step">
-          <div class="step-num">01 / Paste</div>
-          <h3>Drop in your résumé</h3>
-          <p>Paste the whole thing. The boring bullet points, the underwhelming "responsible for…" lines, the projects you forgot to write up. We read it all.</p>
+        <label for="email">
+          Your email
+          <small>· So we can save your spot in the first 100 free users.</small>
+        </label>
+        <input
+          type="email"
+          id="email"
+          name="email"
+          placeholder="your@email.com"
+          required
+          autocomplete="email"
+          aria-label="Email address"
+        />
+
+        <div class="submit-row">
+          <button class="brag-btn" id="submit-btn" onclick="analyze()">
+            Brag me →
+          </button>
+          <span class="micro">~10 seconds. Your résumé stays private.</span>
         </div>
-        <div class="step">
-          <div class="step-num">02 / Analyse</div>
-          <h3>We find what you buried</h3>
-          <p>The AI surfaces the moments hiring managers actually care about — quantifiable wins, scope, leadership signals — and rewrites them so they hit.</p>
-        </div>
-        <div class="step">
-          <div class="step-num">03 / Brag</div>
-          <h3>Plus, your skill gap report</h3>
-          <p>Get a list of what to learn next, ranked by which skills move your salary band the most. Your next interview, already half prepped.</p>
-        </div>
+
+        <div class="error-msg" id="error-msg"></div>
       </div>
-    </section>
-  </div>
 
-  <div class="container">
-    <section class="sample">
-      <div class="section-label" style="text-align:center; margin-bottom: 2rem;">A sample before / after</div>
-      <div class="sample-card">
-        <div class="sample-grid">
-          <div class="sample-col before">
-            <h4>Your résumé says</h4>
-            <p>"Worked on automation testing, improved regression cycle for the team."</p>
+      <div class="loading" id="loading-state">
+        <div class="loading-spinner"></div>
+        <div class="loading-msg">Reading your résumé...</div>
+        <div class="loading-sub">This takes about 10 seconds</div>
+      </div>
+
+      <div class="capacity" id="capacity-state">
+        <h2>We're at capacity right now</h2>
+        <p>Drop your email below — you'll be the first to know when we top up. Usually within a day or two.</p>
+        <input type="email" id="capacity-email" placeholder="your@email.com" style="max-width: 320px; margin-bottom: 1rem;" />
+        <br>
+        <button class="brag-btn" onclick="joinWaitlist()">Save my spot</button>
+        <div id="capacity-success" style="display:none; margin-top: 1rem; color: var(--green);">✓ You're on the list. We'll be in touch.</div>
+      </div>
+
+      <div class="results" id="results-state">
+        <div class="results-header">
+          <div class="results-eyebrow">Your résumé, read honestly</div>
+          <h2 class="results-title">Here's what we found.</h2>
+        </div>
+
+        <div class="score-card">
+          <div class="score-num">
+            <span id="score-value">0</span><span class="out-of">/100</span>
           </div>
-          <div class="sample-arrow">→</div>
-          <div class="sample-col after">
-            <h4>Braggy rewrites it</h4>
-            <p>"Cut regression execution time 32% by automating 140+ critical test flows across 6 modules — saved the team ~18 engineering hours per release."</p>
+          <div class="score-text">
+            <div class="score-label">Your Brag Score</div>
+            <div class="score-reason" id="score-reason"></div>
           </div>
         </div>
-        <div class="sample-meta">
-          <span>+ Skill gap surfaced: <strong>Playwright, CI/CD pipelines</strong></span>
-          <span>+ Brag-ready bullets: <strong>5 rewrites per résumé</strong></span>
+
+        <h3 class="section-title">Your weakest bullets, rewritten</h3>
+        <div class="rewrite-list" id="rewrite-list"></div>
+
+        <h3 class="section-title">Skills worth learning next</h3>
+        <div class="skill-list" id="skill-list"></div>
+
+        <div class="big-fix">
+          <div class="big-fix-label">The #1 thing to fix today</div>
+          <div class="big-fix-text" id="big-fix-text"></div>
+        </div>
+
+        <div class="results-actions">
+          <button onclick="reset()">Try another résumé</button>
         </div>
       </div>
     </section>
   </div>
 
-  <section class="proof">
+  <footer>
     <div class="container">
-      <p class="proof-quote">
-        Most people lose the negotiation <em>before they walk in the room</em> — because their résumé already sold them short.
-      </p>
-      <div class="proof-attr">— The Braggy thesis</div>
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <div class="logo">
+            <span class="logo-dot"></span>
+            <span>Braggy</span>
+          </div>
+          <p>An honest résumé coach for Indian professionals. Plain English. No fluff. No login walls.</p>
+        </div>
+        <div class="footer-col">
+          <h5>Product</h5>
+          <ul>
+            <li><a href="#app-section">Try Braggy</a></li>
+            <li><a href="#" onclick="window.scrollTo({top:0,behavior:'smooth'}); return false;">How it works</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h5>Trust</h5>
+          <ul>
+            <li><a href="/privacy.html">Privacy</a></li>
+            <li><a href="/privacy.html#data">Your data</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <div>© 2026 Braggy</div>
+        <div>Built in India 🇮🇳 · Pre-launch</div>
+      </div>
     </div>
-  </section>
+  </footer>
 
-  <div class="container">
-    <section class="final-cta">
-      <div class="section-label">Be early.</div>
-      <h2>The first 100 get it <em>free</em>.</h2>
-      <form class="waitlist" id="waitlist-2" onsubmit="handleSubmit(event)">
-        <label for="email-2" class="sr-only">Email address</label>
-        <input type="email" id="email-2" name="email" placeholder="your@email.com" required autocomplete="email" />
-        <button type="submit">Save my spot →</button>
-      </form>
-    </section>
-
-    <footer>
-      <div>© 2026 Braggy</div>
-      <div>Built in India 🇮🇳 · Pre-launch</div>
-    </footer>
-  </div>
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    const { createClient } = supabase;
-    const db = createClient(
-      'https://vibklatozzpbyqcljzxv.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpYmtsYXRvenpwYnlxY2xqenh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwMDkwOTcsImV4cCI6MjA5MzU4NTA5N30.SJxrmZJtGJJDhk40sqy0EwzilIdSYqV3ts25uliUPfg'
-    );
+    const SUPABASE_URL = 'https://vibklatozzpbyqcljzxv.supabase.co';
+    const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpYmtsYXRvenpwYnlxY2xqenh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwMDkwOTcsImV4cCI6MjA5MzU4NTA5N30.SJxrmZJtGJJDhk40sqy0EwzilIdSYqV3ts25uliUPfg';
 
-    async function handleSubmit(e) {
-      e.preventDefault();
-      const form = e.target;
-      const email = form.querySelector('input[type="email"]').value.trim();
-      const btn = form.querySelector('button');
+    function showError(msg) {
+      const el = document.getElementById('error-msg');
+      el.textContent = msg;
+      el.classList.add('show');
+      setTimeout(() => el.classList.remove('show'), 8000);
+    }
 
-      btn.textContent = 'Saving...';
-      btn.disabled = true;
+    async function analyze() {
+      const email = document.getElementById('email').value.trim();
+      const resume = document.getElementById('resume').value.trim();
+      const btn = document.getElementById('submit-btn');
 
-      const { error } = await db.from('waitlist').insert({ email });
+      document.getElementById('error-msg').classList.remove('show');
 
-      if (error) {
-        if (error.code === '23505') {
-          // Duplicate email — treat as success so user isn't embarrassed
-          showSuccess(form);
-        } else {
-          btn.textContent = 'Something went wrong — try again';
-          btn.style.background = '#c0392b';
-          btn.disabled = false;
-        }
+      if (!resume || resume.length < 100) {
+        showError('Paste your full résumé — we need at least a few bullets to work with.');
+        return;
+      }
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        showError('Please enter a valid email address.');
         return;
       }
 
-      showSuccess(form);
+      btn.disabled = true;
+      btn.textContent = 'Reading...';
+      document.getElementById('form-state').style.display = 'none';
+      document.getElementById('loading-state').classList.add('show');
+      window.scrollTo({ top: document.getElementById('app-section').offsetTop - 40, behavior: 'smooth' });
+
+      try {
+        const res = await fetch('/api/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, resume }),
+        });
+
+        document.getElementById('loading-state').classList.remove('show');
+
+        if (res.status === 503) {
+          document.getElementById('capacity-state').classList.add('show');
+          document.getElementById('capacity-email').value = email;
+          return;
+        }
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          document.getElementById('form-state').style.display = 'block';
+          btn.disabled = false;
+          btn.textContent = 'Brag me →';
+          showError(data.error || 'Something went wrong. Try again.');
+          return;
+        }
+
+        renderResults(data);
+      } catch (e) {
+        document.getElementById('loading-state').classList.remove('show');
+        document.getElementById('form-state').style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Brag me →';
+        showError('Network error. Check your connection and try again.');
+      }
     }
 
-    function showSuccess(form) {
-      if (form.id === 'waitlist') {
-        form.style.display = 'none';
-        document.getElementById('success').classList.add('show');
-      } else {
-        const btn = form.querySelector('button');
-        btn.textContent = "✓ You're in";
-        btn.style.background = 'var(--orange)';
-        btn.disabled = true;
+    function renderResults(data) {
+      const scoreEl = document.getElementById('score-value');
+      const target = Math.max(0, Math.min(100, parseInt(data.score) || 0));
+      let current = 0;
+      const step = Math.max(1, Math.floor(target / 30));
+      const interval = setInterval(() => {
+        current += step;
+        if (current >= target) { current = target; clearInterval(interval); }
+        scoreEl.textContent = current;
+      }, 30);
+
+      document.getElementById('score-reason').textContent = data.score_reason || '';
+
+      const rl = document.getElementById('rewrite-list');
+      rl.innerHTML = '';
+      (data.rewrites || []).forEach(r => {
+        const div = document.createElement('div');
+        div.className = 'rewrite';
+        div.innerHTML = `
+          <div class="rewrite-row">
+            <div class="rewrite-half before">
+              <h4>You wrote</h4>
+              <p>${escapeHtml(r.before)}</p>
+            </div>
+            <div class="rewrite-arrow">→</div>
+            <div class="rewrite-half after">
+              <h4>Try this instead</h4>
+              <p>${escapeHtml(r.after)}</p>
+            </div>
+          </div>
+        `;
+        rl.appendChild(div);
+      });
+
+      const sl = document.getElementById('skill-list');
+      sl.innerHTML = '';
+      (data.skill_gaps || []).forEach((s, i) => {
+        const div = document.createElement('div');
+        div.className = 'skill';
+        div.innerHTML = `
+          <div class="skill-rank">${i + 1}</div>
+          <div>
+            <div class="skill-name">${escapeHtml(s.skill)}</div>
+            <div class="skill-why">${escapeHtml(s.why)}</div>
+          </div>
+          <div class="skill-lift">+${escapeHtml(s.salary_lift || '')}</div>
+        `;
+        sl.appendChild(div);
+      });
+
+      document.getElementById('big-fix-text').textContent = data.one_big_fix || '';
+      document.getElementById('results-state').classList.add('show');
+      window.scrollTo({ top: document.getElementById('app-section').offsetTop - 40, behavior: 'smooth' });
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[c]));
+    }
+
+    function reset() {
+      document.getElementById('results-state').classList.remove('show');
+      document.getElementById('form-state').style.display = 'block';
+      document.getElementById('submit-btn').disabled = false;
+      document.getElementById('submit-btn').textContent = 'Brag me →';
+      document.getElementById('resume').value = '';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    async function joinWaitlist() {
+      const email = document.getElementById('capacity-email').value.trim();
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        alert('Please enter a valid email.');
+        return;
       }
+      try {
+        await fetch(`${SUPABASE_URL}/rest/v1/waitlist`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_ANON,
+            'Authorization': `Bearer ${SUPABASE_ANON}`,
+            'Prefer': 'resolution=merge-duplicates',
+          },
+          body: JSON.stringify({ email, source: 'capacity' }),
+        });
+      } catch {}
+      document.getElementById('capacity-success').style.display = 'block';
+      document.getElementById('capacity-email').disabled = true;
     }
   </script>
 </body>

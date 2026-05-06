@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy — Braggy</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🎯%3C/text%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Geist:wght@400;500;600&family=Geist+Mono&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --cream: #F2EDE4;
+      --ink: #161413;
+      --orange: #E8541C;
+      --muted: #6B635C;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--cream);
+      color: var(--ink);
+      font-family: 'Geist', sans-serif;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+    .container { max-width: 720px; margin: 0 auto; padding: 2rem 1.5rem 5rem; }
+    header { padding: 1rem 0 3rem; }
+    .logo {
+      font-family: 'Instrument Serif', serif;
+      font-size: 1.55rem;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      text-decoration: none;
+      color: var(--ink);
+    }
+    .logo-dot {
+      width: 9px; height: 9px;
+      background: var(--orange);
+      border-radius: 50%;
+    }
+    h1 {
+      font-family: 'Instrument Serif', serif;
+      font-weight: 400;
+      font-size: clamp(2.2rem, 5vw, 3.2rem);
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.7rem;
+    }
+    .subtitle {
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.78rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 3rem;
+    }
+    h2 {
+      font-family: 'Instrument Serif', serif;
+      font-weight: 400;
+      font-size: 1.6rem;
+      letter-spacing: -0.01em;
+      margin: 2.5rem 0 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    h2::before {
+      content: '';
+      width: 24px; height: 2px;
+      background: var(--orange);
+    }
+    p { margin-bottom: 1rem; font-size: 1.02rem; }
+    ul { margin: 0.5rem 0 1rem 1.4rem; }
+    ul li { margin-bottom: 0.5rem; }
+    a { color: var(--orange); text-decoration: underline; text-underline-offset: 3px; }
+    .back {
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.82rem;
+      color: var(--muted);
+      text-decoration: none;
+      display: inline-block;
+      margin-bottom: 1.5rem;
+    }
+    .back:hover { color: var(--orange); }
+    .last-updated {
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 4rem;
+      padding-top: 2rem;
+      border-top: 1px solid rgba(22, 20, 19, 0.1);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <a href="/" class="logo">
+        <span class="logo-dot"></span>
+        <span>Braggy</span>
+      </a>
+    </header>
+
+    <a href="/" class="back">← Back to Braggy</a>
+
+    <h1>Privacy, in plain English.</h1>
+    <p class="subtitle">No legal mumbo jumbo. Just what we do with your stuff.</p>
+
+    <h2 id="data">What we collect</h2>
+    <p>Two things, only when you use the tool:</p>
+    <ul>
+      <li><strong>Your email</strong> — so we can save your spot and let you know when Braggy properly launches.</li>
+      <li><strong>Your résumé text</strong> — so we can analyze it and send back the score, rewrites, and skill gaps.</li>
+    </ul>
+
+    <h2>What we do with your résumé</h2>
+    <p>We send it to Anthropic's Claude API to generate the analysis. After the response comes back, we don't store the résumé text anywhere on our side. The only thing we keep is your email and the timestamp of when you used the tool.</p>
+    <p>Anthropic's data handling is covered by their own policy — they don't train on API inputs.</p>
+
+    <h2>What we don't do</h2>
+    <ul>
+      <li>We don't sell your email. Ever.</li>
+      <li>We don't share your résumé with recruiters, employers, or anyone else.</li>
+      <li>We don't run ads or share data with ad networks.</li>
+      <li>We don't use your résumé to train any AI model of our own.</li>
+    </ul>
+
+    <h2>How to delete your data</h2>
+    <p>Email us at the contact address (coming soon — for now, the project is run by a single person, and you can reach out via the WhatsApp / social channel where you found Braggy). We'll delete your record within 7 days.</p>
+
+    <h2>Where your data lives</h2>
+    <p>Email records are stored in Supabase (Mumbai region). The website itself is hosted on Vercel. We use Anthropic's Claude API for the analysis. That's the entire stack — no third-party trackers, no analytics yet.</p>
+
+    <h2>Cookies</h2>
+    <p>None right now. If we add basic analytics later, we'll update this page first.</p>
+
+    <h2>Changes to this policy</h2>
+    <p>If something material changes, we'll update this page and note the date below. Since this is a pre-launch product, expect this page to evolve as Braggy grows.</p>
+
+    <div class="last-updated">Last updated: 6 May 2026</div>
+  </div>
+</body>
+</html>
