@@ -13,6 +13,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
 
+  <!-- Cloudflare Turnstile — invisible bot protection -->
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+
   <style>
     :root {
       --cream: #F2EDE4;
@@ -821,6 +824,9 @@
           <span class="micro">~10 seconds · 1 free analysis per email · Your résumé stays private</span>
         </div>
 
+        <!-- Cloudflare Turnstile (invisible) -->
+        <div class="cf-turnstile" data-sitekey="0x4AAAAAADKf1rmg08gq3LcK" data-callback="onTurnstileSuccess" data-theme="light" style="margin-top: 1rem;"></div>
+
         <div class="error-msg" id="error-msg"></div>
       </div>
 
@@ -953,6 +959,46 @@
     let currentEmail = '';
     let currentRating = 0;
     let limitRating = 0;
+    let turnstileToken = '';
+
+    // Generate a stable browser fingerprint (works without external libraries)
+    // This is intentionally lightweight — not a perfect identifier, but enough to slow down casual abuse.
+    async function getFingerprint() {
+      const data = [
+        navigator.userAgent,
+        navigator.language,
+        screen.width + 'x' + screen.height,
+        screen.colorDepth,
+        new Date().getTimezoneOffset(),
+        navigator.hardwareConcurrency || 0,
+        navigator.platform || '',
+        // Canvas fingerprint
+        (() => {
+          try {
+            const c = document.createElement('canvas');
+            const ctx = c.getContext('2d');
+            ctx.textBaseline = 'top';
+            ctx.font = '14px Arial';
+            ctx.fillStyle = '#f60';
+            ctx.fillRect(0, 0, 100, 30);
+            ctx.fillStyle = '#069';
+            ctx.fillText('Braggy fp 🎯', 2, 15);
+            return c.toDataURL();
+          } catch { return ''; }
+        })(),
+      ].join('|');
+
+      const buf = new TextEncoder().encode(data);
+      const hash = await crypto.subtle.digest('SHA-256', buf);
+      return Array.from(new Uint8Array(hash))
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
+    }
+
+    // Cloudflare Turnstile callback
+    function onTurnstileSuccess(token) {
+      turnstileToken = token;
+    }
 
     function showError(msg) {
       const el = document.getElementById('error-msg');
@@ -985,10 +1031,17 @@
       window.scrollTo({ top: document.getElementById('app-section').offsetTop - 40, behavior: 'smooth' });
 
       try {
+        const fingerprint = await getFingerprint();
+
         const res = await fetch('/api/analyze', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, resume }),
+          body: JSON.stringify({
+            email,
+            resume,
+            fingerprint,
+            turnstile_token: turnstileToken,
+          }),
         });
 
         document.getElementById('loading-state').classList.remove('show');

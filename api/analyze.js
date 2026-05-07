@@ -2,6 +2,11 @@
 // Proxies Anthropic API and records user activity in Supabase.
 // API key is read from process.env.ANTHROPIC_API_KEY (set in Vercel dashboard).
 
+import { isDisposableEmail } from './_disposable-domains.js';
+
+// Daily platform-wide cap — protects against viral spikes
+const DAILY_CAP = 30;
+
 export const config = {
   runtime: 'edge',
 };
@@ -77,13 +82,52 @@ export default async function handler(req) {
     });
   }
 
-  const { email, resume } = body;
+  const { email, resume, fingerprint, turnstile_token } = body;
 
   if (!email || !resume) {
     return new Response(JSON.stringify({ error: 'Email and résumé required' }), {
       status: 400,
       headers: { 'Content-Type': 'application/json' },
     });
+  }
+
+  // === ABUSE LAYER 1: Disposable email blocking ===
+  if (isDisposableEmail(email)) {
+    return new Response(
+      JSON.stringify({ error: 'Please use a real email — we block temporary email services to keep this fair for everyone.' }),
+      { status: 400, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+
+  // === ABUSE LAYER 2: Cloudflare Turnstile verification ===
+  if (process.env.TURNSTILE_SECRET_KEY) {
+    if (!turnstile_token) {
+      return new Response(
+        JSON.stringify({ error: 'Please complete the verification check and try again.' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+    try {
+      const tsRes = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          secret: process.env.TURNSTILE_SECRET_KEY,
+          response: turnstile_token,
+        }),
+      });
+      const tsData = await tsRes.json();
+      if (!tsData.success) {
+        console.error('turnstile failed', tsData);
+        return new Response(
+          JSON.stringify({ error: 'Verification failed. Refresh the page and try again.' }),
+          { status: 400, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+    } catch (e) {
+      console.error('turnstile error', e);
+      // If Turnstile is down, allow request — don't block legit users
+    }
   }
 
   if (resume.length < 100) {
@@ -98,6 +142,66 @@ export default async function handler(req) {
       JSON.stringify({ error: 'Your résumé is unusually long. Trim it to under 15,000 characters and try again.' }),
       { status: 400, headers: { 'Content-Type': 'application/json' } }
     );
+  }
+
+  // === ABUSE LAYER 3 + 4: IP rate limit, fingerprint check, and daily cap ===
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
+             req.headers.get('x-real-ip') ||
+             'unknown';
+  const fp = fingerprint || 'no-fingerprint';
+
+  try {
+    const abuseRes = await fetch(
+      `${process.env.SUPABASE_URL}/rest/v1/rpc/check_abuse`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': process.env.SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ p_ip: ip, p_fingerprint: fp }),
+      }
+    );
+    if (abuseRes.ok) {
+      const stats = await abuseRes.json();
+
+      // Daily cap — auto-pause if platform hits limit
+      if (stats.total_today >= DAILY_CAP) {
+        return new Response(
+          JSON.stringify({
+            error: 'capacity',
+            message: "We've hit today's free analysis cap. Come back tomorrow — your spot is saved.",
+          }),
+          { status: 503, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // IP rate limit — 1 per IP per 24h
+      if (stats.ip_count >= 1) {
+        return new Response(
+          JSON.stringify({
+            error: 'rate_limited',
+            message: "Looks like this network already used a free analysis today. Try again in 24 hours, or use a different connection.",
+          }),
+          { status: 429, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Fingerprint rate limit — 1 per browser per 24h
+      if (stats.fp_count >= 1) {
+        return new Response(
+          JSON.stringify({
+            error: 'rate_limited',
+            message: "This browser already ran an analysis today. Try again in 24 hours.",
+          }),
+          { status: 429, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+  } catch (e) {
+    console.error('abuse check failed', e);
+    // If check fails, allow request — don't block legit users
   }
 
   // CHECK USAGE LIMIT — before spending Anthropic credits
@@ -149,6 +253,24 @@ export default async function handler(req) {
     }
   } catch (e) {
     console.error('supabase rpc threw', e);
+  }
+
+  // Log to abuse_log so IP and fingerprint counts are accurate for next request
+  try {
+    await fetch(
+      `${process.env.SUPABASE_URL}/rest/v1/rpc/log_abuse`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': process.env.SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ p_ip: ip, p_fingerprint: fp, p_email: email }),
+      }
+    );
+  } catch (e) {
+    console.error('abuse log failed', e);
   }
 
   // Call Anthropic
