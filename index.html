@@ -199,6 +199,139 @@
     }
     .what-list strong { font-weight: 600; }
 
+    /* SAMPLE ANALYSIS SECTION */
+    .sample {
+      max-width: 580px;
+      margin-bottom: 2rem;
+    }
+    .sample-eyebrow {
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.7rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    .sample-eyebrow::before {
+      content: '';
+      width: 22px; height: 1px;
+      background: var(--muted);
+    }
+    .sample h2 {
+      font-family: 'Instrument Serif', serif;
+      font-size: clamp(1.7rem, 3.2vw, 2.2rem);
+      line-height: 1.1;
+      letter-spacing: -0.018em;
+      font-weight: 400;
+      margin-bottom: 1.25rem;
+      max-width: 22ch;
+    }
+    .sample h2 em {
+      font-style: italic;
+      color: var(--orange);
+    }
+    .sample-card {
+      background: white;
+      border: 1px solid var(--ink);
+      border-radius: 18px;
+      padding: 0.5rem 1.75rem;
+      box-shadow: 4px 4px 0 var(--ink);
+    }
+    .sample-row { padding: 1.25rem 0; }
+    .sample-row + .sample-row { border-top: 1px solid rgba(22, 20, 19, 0.1); }
+    .sample-tag {
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.65rem;
+      font-weight: 500;
+    }
+    .sample-tag.accent { color: var(--orange); }
+    .sample-before {
+      font-family: 'Instrument Serif', serif;
+      font-style: italic;
+      font-size: 1.15rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    .sample-score-row {
+      display: flex;
+      align-items: baseline;
+      gap: 0.7rem;
+      margin-bottom: 0.55rem;
+    }
+    .sample-score {
+      font-family: 'Instrument Serif', serif;
+      font-size: 3.6rem;
+      line-height: 1;
+      letter-spacing: -0.025em;
+      color: var(--ink);
+    }
+    .sample-score-out {
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+    .sample-verdict {
+      font-size: 0.95rem;
+      color: var(--ink);
+      line-height: 1.5;
+    }
+    .sample-verdict strong { font-weight: 600; }
+    .sample-after {
+      font-size: 1rem;
+      line-height: 1.55;
+      color: var(--ink);
+      font-weight: 500;
+    }
+    .sample-after mark {
+      background: rgba(232, 84, 28, 0.14);
+      color: var(--ink);
+      padding: 1px 4px;
+      border-radius: 3px;
+      font-weight: 600;
+    }
+    .sample-skill {
+      font-family: 'Instrument Serif', serif;
+      font-size: 1.35rem;
+      margin-bottom: 0.35rem;
+      font-weight: 400;
+      letter-spacing: -0.01em;
+      line-height: 1.25;
+    }
+    .sample-skill-why {
+      font-size: 0.92rem;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+    .sample-lift {
+      display: inline-block;
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.72rem;
+      font-weight: 500;
+      color: var(--orange);
+      background: rgba(232, 84, 28, 0.09);
+      padding: 0.3rem 0.75rem;
+      border-radius: 100px;
+      margin-top: 0.65rem;
+      letter-spacing: 0.04em;
+    }
+    .sample-cta {
+      text-align: center;
+      margin: 1.4rem auto 0;
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.78rem;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+      max-width: 580px;
+    }
+    .sample-cta span { color: var(--orange); font-weight: 500; }
+
     .app { padding: 1rem 0 4rem; }
     .form-card {
       background: white;
@@ -786,6 +919,41 @@
           <li><span><strong>Skills worth learning next</strong> — ranked by how much they could raise your salary.</span></li>
         </ul>
       </div>
+    </section>
+
+    <section class="sample">
+      <div class="sample-eyebrow">See a real analysis</div>
+      <h2>No fluff. Just the <em>truth</em> about your résumé.</h2>
+
+      <div class="sample-card">
+        <div class="sample-row">
+          <div class="sample-tag">Before — original bullet</div>
+          <p class="sample-before">"Managed social media for the company and assisted with marketing campaigns to grow brand awareness."</p>
+        </div>
+
+        <div class="sample-row">
+          <div class="sample-tag">Braggy score</div>
+          <div class="sample-score-row">
+            <span class="sample-score">34</span>
+            <span class="sample-score-out">/ 100</span>
+          </div>
+          <p class="sample-verdict"><strong>Vague.</strong> Zero metrics. Could describe an intern or a director. Recruiters skip in 4 seconds.</p>
+        </div>
+
+        <div class="sample-row">
+          <div class="sample-tag accent">After — rewritten</div>
+          <p class="sample-after">"Grew company Instagram from <mark>4.2K to 28K</mark> followers in 11 months by launching a weekly carousel series — generated <mark>340+ qualified leads</mark> for sales and contributed <mark>₹18L</mark> to attributed pipeline."</p>
+        </div>
+
+        <div class="sample-row">
+          <div class="sample-tag">Skill worth learning next</div>
+          <div class="sample-skill">Performance Marketing — Meta + Google Ads</div>
+          <p class="sample-skill-why">Marketers who own paid-ads budgets earn meaningfully more than those who only run organic. A 4-week certification plus two portfolio campaigns is enough to credibly add it to your résumé.</p>
+          <span class="sample-lift">+ ₹3–5L / year potential</span>
+        </div>
+      </div>
+
+      <p class="sample-cta">↓ <span>Try yours below</span> &nbsp;·&nbsp; takes ~10 seconds</p>
     </section>
 
     <section class="app" id="app-section">
