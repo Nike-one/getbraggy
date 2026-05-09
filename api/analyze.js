@@ -177,12 +177,12 @@ export default async function handler(req) {
         );
       }
 
-      // IP rate limit — 1 per IP per 24h
-      if (stats.ip_count >= 1) {
+      // IP rate limit — 5 per IP per 24h (allows households + shared WiFi)
+      if (stats.ip_count >= 5) {
         return new Response(
           JSON.stringify({
             error: 'rate_limited',
-            message: "Looks like this network already used a free analysis today. Try again in 24 hours, or use a different connection.",
+            message: "We've hit the limit for this network today. Try again in 24 hours, or use a different connection.",
           }),
           { status: 429, headers: { 'Content-Type': 'application/json' } }
         );

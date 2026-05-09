@@ -887,6 +887,115 @@
         transition-duration: 0.01ms !important;
       }
     }
+
+    /* How-steps strip */
+    .how-steps {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.4rem 0.75rem;
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.75rem;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      margin-bottom: 1.25rem;
+    }
+    .how-steps .sn { color: var(--orange); font-weight: 500; }
+    .how-steps .sep { opacity: 0.35; }
+    .see-example {
+      margin-left: auto;
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.72rem;
+      color: var(--muted);
+      text-decoration: none;
+      letter-spacing: 0.08em;
+      transition: color 0.15s;
+    }
+    .see-example:hover { color: var(--orange); }
+
+    /* Section CTA headline */
+    .section-cta-head {
+      font-family: 'Instrument Serif', serif;
+      font-size: clamp(1.5rem, 3vw, 2rem);
+      font-weight: 400;
+      letter-spacing: -0.018em;
+      line-height: 1.1;
+      margin-bottom: 1.25rem;
+      color: var(--ink);
+    }
+
+    /* Upload trigger button */
+    .upload-trigger {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.55rem;
+      width: 100%;
+      background: transparent;
+      border: 1.5px dashed rgba(22, 20, 19, 0.3);
+      border-radius: 10px;
+      padding: 0.85rem 1.25rem;
+      font-family: 'Geist', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--ink);
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .upload-trigger:hover {
+      border-color: var(--ink);
+      background: rgba(22, 20, 19, 0.04);
+    }
+    .upload-status {
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 0.5rem;
+      min-height: 1.1em;
+      letter-spacing: 0.04em;
+    }
+    .upload-status.err { color: var(--orange-deep); }
+    .upload-status.ok { color: var(--green); }
+
+    /* OR divider between upload and paste */
+    .or-divider {
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin: 0.85rem 0 0.75rem;
+    }
+    .or-divider::before, .or-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: rgba(22, 20, 19, 0.1);
+    }
+
+    /* Resume textarea — stronger visual affordance */
+    #resume {
+      border: 1.5px dashed rgba(22, 20, 19, 0.22);
+      background: var(--cream-deep);
+    }
+    #resume:focus {
+      border-color: var(--ink);
+      border-style: solid;
+      background: var(--cream);
+    }
+
+    /* Privacy reassurance */
+    .privacy-note {
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-top: 0.6rem;
+      letter-spacing: 0.03em;
+      line-height: 1.5;
+    }
   </style>
   <script defer src="https://braggy-analytics.vercel.app/script.js" data-website-id="c3d97865-f40b-4e66-aa20-c5051cdd2d7a"></script>
 </head>
@@ -922,7 +1031,7 @@
       </div>
     </section>
 
-    <section class="sample">
+    <section class="sample" id="sample-section">
       <div class="sample-eyebrow">See a real analysis</div>
       <h2>No fluff. Just the <em>truth</em> about your résumé.</h2>
 
@@ -958,17 +1067,33 @@
     </section>
 
     <section class="app" id="app-section">
+      <div class="how-steps">
+        <span><span class="sn">1.</span> Upload or paste your résumé</span>
+        <span class="sep">·</span>
+        <span><span class="sn">2.</span> Enter your email</span>
+        <span class="sep">·</span>
+        <span><span class="sn">3.</span> Get brutally honest feedback in ~10 seconds</span>
+        <a href="#sample-section" class="see-example">↑ See an example</a>
+      </div>
       <div class="form-card" id="form-state">
-        <div class="form-step">Step 1 of 1</div>
+        <h2 class="section-cta-head">Show me your résumé.</h2>
         <label for="resume">
-          Paste your résumé below
-          <small>· The whole thing. Bullets, job titles, education — everything.</small>
+          Upload or paste your résumé
+          <small>· PDF or DOCX, or paste text directly. The whole thing.</small>
         </label>
+        <button type="button" class="upload-trigger" onclick="triggerUpload()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Upload PDF or DOCX
+        </button>
+        <input type="file" id="resume-file" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" style="display:none" onchange="handleFileChange(this)" />
+        <div class="upload-status" id="upload-status"></div>
+        <div class="or-divider">or paste below</div>
         <textarea
           id="resume"
-          placeholder="Paste your résumé here. Don't worry about formatting — we'll figure it out."
+          placeholder="Paste full résumé text here — skills, experience, projects, education. Or use the upload button above."
           aria-label="Your résumé text"
         ></textarea>
+        <div class="privacy-note">We don't store your résumé. It's sent to Claude for analysis and discarded.</div>
 
         <div class="form-divider"></div>
 
@@ -1405,6 +1530,100 @@
       } catch {}
       document.getElementById('capacity-success').style.display = 'block';
       document.getElementById('capacity-email').disabled = true;
+    }
+
+    // --- File upload (lazy-loaded pdf.js + mammoth.js) ---
+
+    function triggerUpload() {
+      document.getElementById('resume-file').click();
+    }
+
+    function handleFileChange(input) {
+      const file = input.files[0];
+      input.value = '';
+      if (file) handleUpload(file);
+    }
+
+    async function handleUpload(file) {
+      const status = document.getElementById('upload-status');
+      status.className = 'upload-status';
+
+      if (file.size > 5 * 1024 * 1024) {
+        status.textContent = 'File is over 5MB. Compress it or copy-paste the text instead.';
+        status.className = 'upload-status err';
+        return;
+      }
+
+      const name = file.name.toLowerCase();
+      const isPdf = name.endsWith('.pdf') || file.type === 'application/pdf';
+      const isDocx = name.endsWith('.docx') ||
+        file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+
+      if (!isPdf && !isDocx) {
+        status.textContent = 'Only PDF and DOCX files are supported.';
+        status.className = 'upload-status err';
+        return;
+      }
+
+      status.textContent = 'Reading your résumé…';
+
+      try {
+        const text = isPdf ? await extractPdf(file) : await extractDocx(file);
+        const trimmed = (text || '').trim();
+
+        if (trimmed.length < 100) {
+          status.textContent = "Couldn't read this file. Try copy-pasting the text instead, or save as a different format.";
+          status.className = 'upload-status err';
+          return;
+        }
+        if (trimmed.length > 15000) {
+          status.textContent = 'Résumé text is too long after extraction. Trim to under 15,000 characters.';
+          status.className = 'upload-status err';
+          return;
+        }
+
+        document.getElementById('resume').value = trimmed;
+        status.textContent = '✓ Résumé loaded — review below, then hit Brag me →';
+        status.className = 'upload-status ok';
+      } catch (e) {
+        console.error('upload parse error', e);
+        status.textContent = "Couldn't read this file. Try copy-pasting the text instead, or save as a different format.";
+        status.className = 'upload-status err';
+      }
+    }
+
+    async function extractPdf(file) {
+      if (!window._pdfjs) {
+        const lib = await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.mjs');
+        lib.GlobalWorkerOptions.workerSrc =
+          'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.mjs';
+        window._pdfjs = lib;
+      }
+      const { getDocument } = window._pdfjs;
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await getDocument({ data: arrayBuffer }).promise;
+      const pages = [];
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        pages.push(content.items.map(item => item.str).join(' '));
+      }
+      return pages.join('\n');
+    }
+
+    async function extractDocx(file) {
+      if (!window._mammoth) {
+        await new Promise((resolve, reject) => {
+          const s = document.createElement('script');
+          s.src = 'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js';
+          s.onload = () => { window._mammoth = window.mammoth; resolve(); };
+          s.onerror = reject;
+          document.head.appendChild(s);
+        });
+      }
+      const arrayBuffer = await file.arrayBuffer();
+      const result = await window._mammoth.extractRawText({ arrayBuffer });
+      return result.value;
     }
   </script>
 </body>
