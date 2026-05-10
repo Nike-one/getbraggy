@@ -87,10 +87,20 @@ export default async function handler(req) {
     });
   }
 
+  // Parse body first — needed before we can check dev_key
+  let body;
+  try {
+    body = await req.json();
+  } catch {
+    return new Response(JSON.stringify({ error: 'Invalid JSON' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
   // Dev bypass — set DEV_KEY env var in Vercel, then in browser console run
   // localStorage.setItem('braggy_dev_key', '<same-key>') to bypass all rate limits
-  // while testing in production. Wrong/missing key falls through to normal flow,
-  // so a guessing attacker just hits the regular limits.
+  // while testing in production. Wrong/missing key falls through to normal flow.
   const isDev =
     body.dev_key &&
     process.env.DEV_KEY &&
@@ -102,16 +112,6 @@ export default async function handler(req) {
       JSON.stringify({ error: 'capacity', message: "We're at capacity right now. Drop your email — you'll be first when we top up." }),
       { status: 503, headers: { 'Content-Type': 'application/json' } }
     );
-  }
-
-  let body;
-  try {
-    body = await req.json();
-  } catch {
-    return new Response(JSON.stringify({ error: 'Invalid JSON' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' },
-    });
   }
 
   const { email, resume, fingerprint, turnstile_token } = body;
