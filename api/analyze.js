@@ -87,8 +87,17 @@ export default async function handler(req) {
     });
   }
 
+  // Dev bypass — set DEV_KEY env var in Vercel, then in browser console run
+  // localStorage.setItem('braggy_dev_key', '<same-key>') to bypass all rate limits
+  // while testing in production. Wrong/missing key falls through to normal flow,
+  // so a guessing attacker just hits the regular limits.
+  const isDev =
+    body.dev_key &&
+    process.env.DEV_KEY &&
+    body.dev_key === process.env.DEV_KEY;
+
   // Kill switch — flip BRAGGY_ACTIVE to "false" in Vercel env vars to put site in waitlist mode
-  if (process.env.BRAGGY_ACTIVE === 'false') {
+  if (!isDev && process.env.BRAGGY_ACTIVE === 'false') {
     return new Response(
       JSON.stringify({ error: 'capacity', message: "We're at capacity right now. Drop your email — you'll be first when we top up." }),
       { status: 503, headers: { 'Content-Type': 'application/json' } }
@@ -125,8 +134,8 @@ export default async function handler(req) {
     );
   }
 
-  // === ABUSE LAYER 2: Cloudflare Turnstile verification ===
-  if (process.env.TURNSTILE_SECRET_KEY) {
+  // === ABUSE LAYER 2: Cloudflare Turnstile verification (skipped in dev mode) ===
+  if (!isDev && process.env.TURNSTILE_SECRET_KEY) {
     if (!turnstile_token) {
       return new Response(
         JSON.stringify({ error: 'Please complete the verification check and try again.' }),
@@ -170,64 +179,66 @@ export default async function handler(req) {
     );
   }
 
-  // === ABUSE LAYER 3 + 4: IP rate limit, fingerprint check, and daily cap ===
+  // === ABUSE LAYER 3 + 4: IP rate limit, fingerprint check, and daily cap (skipped in dev mode) ===
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
              req.headers.get('x-real-ip') ||
              'unknown';
   const fp = fingerprint || 'no-fingerprint';
 
-  try {
-    const abuseRes = await fetch(
-      `${process.env.SUPABASE_URL}/rest/v1/rpc/check_abuse`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': process.env.SUPABASE_ANON_KEY,
-          'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
-        },
-        body: JSON.stringify({ p_ip: ip, p_fingerprint: fp }),
-      }
-    );
-    if (abuseRes.ok) {
-      const stats = await abuseRes.json();
+  if (!isDev) {
+    try {
+      const abuseRes = await fetch(
+        `${process.env.SUPABASE_URL}/rest/v1/rpc/check_abuse`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': process.env.SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({ p_ip: ip, p_fingerprint: fp }),
+        }
+      );
+      if (abuseRes.ok) {
+        const stats = await abuseRes.json();
 
-      // Daily cap — auto-pause if platform hits limit
-      if (stats.total_today >= DAILY_CAP) {
-        return new Response(
-          JSON.stringify({
-            error: 'capacity',
-            message: "We've hit today's free analysis cap. Come back tomorrow — your spot is saved.",
-          }),
-          { status: 503, headers: { 'Content-Type': 'application/json' } }
-        );
-      }
+        // Daily cap — auto-pause if platform hits limit
+        if (stats.total_today >= DAILY_CAP) {
+          return new Response(
+            JSON.stringify({
+              error: 'capacity',
+              message: "We've hit today's free analysis cap. Come back tomorrow — your spot is saved.",
+            }),
+            { status: 503, headers: { 'Content-Type': 'application/json' } }
+          );
+        }
 
-      // IP rate limit — 5 per IP per 24h (allows households + shared WiFi)
-      if (stats.ip_count >= 5) {
-        return new Response(
-          JSON.stringify({
-            error: 'rate_limited',
-            message: "We've hit the limit for this network today. Try again in 24 hours, or use a different connection.",
-          }),
-          { status: 429, headers: { 'Content-Type': 'application/json' } }
-        );
-      }
+        // IP rate limit — 5 per IP per 24h (allows households + shared WiFi)
+        if (stats.ip_count >= 5) {
+          return new Response(
+            JSON.stringify({
+              error: 'rate_limited',
+              message: "We've hit the limit for this network today. Try again in 24 hours, or use a different connection.",
+            }),
+            { status: 429, headers: { 'Content-Type': 'application/json' } }
+          );
+        }
 
-      // Fingerprint rate limit — 1 per browser per 24h
-      if (stats.fp_count >= 1) {
-        return new Response(
-          JSON.stringify({
-            error: 'rate_limited',
-            message: "This browser already ran an analysis today. Try again in 24 hours.",
-          }),
-          { status: 429, headers: { 'Content-Type': 'application/json' } }
-        );
+        // Fingerprint rate limit — 1 per browser per 24h
+        if (stats.fp_count >= 1) {
+          return new Response(
+            JSON.stringify({
+              error: 'rate_limited',
+              message: "This browser already ran an analysis today. Try again in 24 hours.",
+            }),
+            { status: 429, headers: { 'Content-Type': 'application/json' } }
+          );
+        }
       }
+    } catch (e) {
+      console.error('abuse check failed', e);
+      // If check fails, allow request — don't block legit users
     }
-  } catch (e) {
-    console.error('abuse check failed', e);
-    // If check fails, allow request — don't block legit users
   }
 
   // The 1-per-email gate has moved to /api/unlock.js — it now governs the full-analysis
@@ -236,22 +247,26 @@ export default async function handler(req) {
   // first-touch users pay with their email.
 
   // Log to abuse_log so IP and fingerprint counts are accurate for next request.
-  // p_email is passed as null when no email was supplied (the common case in the new flow).
-  try {
-    await fetch(
-      `${process.env.SUPABASE_URL}/rest/v1/rpc/log_abuse`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': process.env.SUPABASE_ANON_KEY,
-          'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
-        },
-        body: JSON.stringify({ p_ip: ip, p_fingerprint: fp, p_email: email || null }),
-      }
-    );
-  } catch (e) {
-    console.error('abuse log failed', e);
+  // Skipped in dev mode so dev tests don't pollute the table or burn quota for the next
+  // legit visitor on the same IP. p_email is null when no email was supplied (the common
+  // case in the new flow).
+  if (!isDev) {
+    try {
+      await fetch(
+        `${process.env.SUPABASE_URL}/rest/v1/rpc/log_abuse`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': process.env.SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({ p_ip: ip, p_fingerprint: fp, p_email: email || null }),
+        }
+      );
+    } catch (e) {
+      console.error('abuse log failed', e);
+    }
   }
 
   // Call Anthropic

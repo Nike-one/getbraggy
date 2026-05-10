@@ -1226,6 +1226,26 @@
       letter-spacing: 0.03em;
       line-height: 1.5;
     }
+
+    /* DEV BYPASS badge — only shown when DEV_KEY is set in localStorage */
+    .dev-badge {
+      display: none;
+      position: fixed;
+      bottom: 14px;
+      right: 14px;
+      background: var(--ink);
+      color: var(--orange);
+      font-family: 'Geist Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      padding: 6px 11px;
+      border-radius: 999px;
+      border: 1px solid var(--orange);
+      z-index: 9999;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      pointer-events: none;
+    }
+    .dev-badge.show { display: block; }
   </style>
   <!-- analytics feature live -->
   <script defer src="https://braggy-analytics.vercel.app/script.js" data-website-id="c3d97865-f40b-4e66-aa20-c5051cdd2d7a"></script>
@@ -1517,6 +1537,23 @@
     let turnstileToken = '';
     let analysisData = null;
 
+    // Dev bypass — set this in browser console:
+    //   localStorage.setItem('braggy_dev_key', '<key>')
+    // Must match process.env.DEV_KEY in Vercel. Wrong/missing key = normal flow.
+    const DEV_KEY = (() => {
+      try { return localStorage.getItem('braggy_dev_key') || ''; } catch { return ''; }
+    })();
+    if (DEV_KEY) {
+      // Reveal the badge once the DOM is ready
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+          document.getElementById('dev-badge')?.classList.add('show');
+        });
+      } else {
+        document.getElementById('dev-badge')?.classList.add('show');
+      }
+    }
+
     // Generate a stable browser fingerprint (works without external libraries)
     // This is intentionally lightweight — not a perfect identifier, but enough to slow down casual abuse.
     async function getFingerprint() {
@@ -1590,6 +1627,7 @@
             resume,
             fingerprint,
             turnstile_token: turnstileToken,
+            ...(DEV_KEY && { dev_key: DEV_KEY }),
           }),
         });
 
@@ -1712,7 +1750,10 @@
         const res = await fetch('/api/unlock', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email }),
+          body: JSON.stringify({
+            email,
+            ...(DEV_KEY && { dev_key: DEV_KEY }),
+          }),
         });
 
         let data = {};
@@ -1985,5 +2026,7 @@
       return result.value;
     }
   </script>
+  <div class="dev-badge" id="dev-badge">DEV BYPASS</div>
+
 </body>
 </html>
