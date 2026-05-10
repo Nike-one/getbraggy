@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Braggy — The opposite of every other résumé tool.</title>
-  <meta name="description" content="We don't write your résumé for you. We tell you what's wrong with it. Paste your résumé, get an honest score, sharper bullets, and skill gaps ranked by salary impact." />
-  <meta property="og:title" content="Braggy — The opposite of every other résumé tool." />
-  <meta property="og:description" content="We don't write your résumé for you. We tell you what's wrong with it." />
+  <title>Braggy — Your résumé is making you look cheaper than you are.</title>
+  <meta name="description" content="Braggy shows why recruiters ignore your résumé, where you sound junior, and what to fix before your next switch. We don't write your résumé. We tell you what's wrong with it." />
+  <meta property="og:title" content="Braggy — Your résumé is making you look cheaper than you are." />
+  <meta property="og:description" content="Why recruiters ignore your résumé, where you sound junior, and what to fix before your next switch." />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🎯%3C/text%3E%3C/svg%3E" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -149,6 +149,32 @@
       color: var(--orange);
     }
 
+    .hero-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--ink);
+      color: var(--cream);
+      font-family: 'Geist', system-ui, sans-serif;
+      font-weight: 500;
+      font-size: 1rem;
+      letter-spacing: -0.005em;
+      padding: 1rem 1.6rem;
+      border-radius: 999px;
+      text-decoration: none;
+      box-shadow: 4px 4px 0 var(--orange);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      margin-bottom: 2.5rem;
+    }
+    .hero-cta:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 6px 6px 0 var(--orange);
+    }
+    .hero-cta:active {
+      transform: translate(2px, 2px);
+      box-shadow: 1px 1px 0 var(--orange);
+    }
+
     .what-you-get {
       background: white;
       border: 1px solid var(--ink);
@@ -198,6 +224,89 @@
       font-weight: 500;
     }
     .what-list strong { font-weight: 600; }
+
+    /* PAIN PREVIEW SECTION */
+    .pain-preview {
+      max-width: 720px;
+      margin: 1rem 0 3rem;
+      padding: 2.25rem 2rem;
+      background: var(--cream-deep);
+      border: 1px solid var(--ink);
+      border-radius: 18px;
+      box-shadow: 4px 4px 0 var(--ink);
+    }
+    .pain-eyebrow {
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--orange);
+      margin-bottom: 0.85rem;
+    }
+    .pain-head {
+      font-family: 'Instrument Serif', serif;
+      font-weight: 400;
+      font-size: clamp(1.7rem, 4vw, 2.4rem);
+      line-height: 1.1;
+      letter-spacing: -0.018em;
+      color: var(--ink);
+      margin-bottom: 1.25rem;
+      max-width: 22ch;
+    }
+    .pain-head em {
+      font-style: italic;
+      color: var(--orange);
+    }
+    .pain-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.55rem;
+      margin-bottom: 1.25rem;
+    }
+    .pain-list li {
+      font-size: 1rem;
+      line-height: 1.45;
+      color: var(--ink-soft);
+      display: flex;
+      gap: 0.7rem;
+      align-items: flex-start;
+    }
+    .pain-dash {
+      color: var(--orange);
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+    .pain-close {
+      font-family: 'Instrument Serif', serif;
+      font-style: italic;
+      font-size: 1.15rem;
+      line-height: 1.4;
+      color: var(--muted);
+      padding-top: 1rem;
+      border-top: 1px solid rgba(22, 20, 19, 0.15);
+    }
+
+    /* POSITIONING QUOTE */
+    .positioning-quote {
+      max-width: 720px;
+      margin: 0.5rem 0 3rem;
+    }
+    .positioning-quote blockquote {
+      font-family: 'Instrument Serif', serif;
+      font-size: clamp(1.4rem, 3.2vw, 2rem);
+      line-height: 1.25;
+      letter-spacing: -0.012em;
+      color: var(--ink);
+      padding: 0.5rem 0 0.5rem 1.5rem;
+      border-left: 3px solid var(--orange);
+    }
+    .positioning-quote .pq-accent {
+      display: block;
+      margin-top: 0.4rem;
+      font-style: italic;
+      color: var(--orange);
+    }
 
     /* SAMPLE ANALYSIS SECTION */
     .sample {
@@ -663,6 +772,127 @@
     }
     .results-actions button:hover { background: var(--ink); color: var(--cream); }
 
+    /* UNLOCK CARD (post-preview email gate) */
+    .unlock-card {
+      background: var(--ink);
+      color: var(--cream);
+      border-radius: 20px;
+      padding: 2rem 1.85rem;
+      margin-top: 1.75rem;
+      box-shadow: 6px 6px 0 var(--orange);
+      position: relative;
+      overflow: hidden;
+    }
+    .unlock-card::before {
+      content: '';
+      position: absolute;
+      top: -50px; right: -50px;
+      width: 180px; height: 180px;
+      background: radial-gradient(circle, rgba(232, 84, 28, 0.28), transparent 70%);
+      pointer-events: none;
+    }
+    .unlock-eyebrow {
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--orange);
+      margin-bottom: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      position: relative;
+      z-index: 2;
+    }
+    .unlock-eyebrow::before {
+      content: '🔒';
+      font-size: 0.85rem;
+    }
+    .unlock-head {
+      font-family: 'Instrument Serif', serif;
+      font-weight: 400;
+      font-size: clamp(1.45rem, 3.4vw, 1.95rem);
+      line-height: 1.2;
+      letter-spacing: -0.012em;
+      color: var(--cream);
+      margin-bottom: 0.75rem;
+      max-width: 26ch;
+      position: relative;
+      z-index: 2;
+    }
+    .unlock-head #unlock-rest-count {
+      color: var(--orange);
+      font-style: italic;
+    }
+    .unlock-sub {
+      font-size: 0.95rem;
+      line-height: 1.5;
+      color: rgba(242, 237, 228, 0.75);
+      margin-bottom: 1.4rem;
+      max-width: 44ch;
+      position: relative;
+      z-index: 2;
+    }
+    .unlock-row {
+      display: flex;
+      gap: 0.65rem;
+      flex-wrap: wrap;
+      position: relative;
+      z-index: 2;
+    }
+    .unlock-row input[type="email"] {
+      flex: 1 1 220px;
+      min-width: 0;
+      background: rgba(242, 237, 228, 0.08);
+      border: 1px solid rgba(242, 237, 228, 0.25);
+      color: var(--cream);
+      font-family: 'Geist', sans-serif;
+      font-size: 1rem;
+      padding: 0.85rem 1rem;
+      border-radius: 10px;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .unlock-row input[type="email"]::placeholder {
+      color: rgba(242, 237, 228, 0.4);
+    }
+    .unlock-row input[type="email"]:focus {
+      outline: none;
+      border-color: var(--orange);
+      background: rgba(242, 237, 228, 0.12);
+    }
+    .unlock-row .brag-btn {
+      flex: 0 0 auto;
+      white-space: nowrap;
+    }
+    .unlock-error {
+      display: none;
+      margin-top: 0.85rem;
+      font-size: 0.88rem;
+      color: #FFB39A;
+      position: relative;
+      z-index: 2;
+    }
+    .unlock-error.show { display: block; }
+
+    /* LOCKED SECTION — hidden until email unlock */
+    .locked-section {
+      display: none;
+    }
+    .locked-section.reveal {
+      display: block;
+      animation: revealLocked 0.45s ease-out;
+    }
+    @keyframes revealLocked {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 480px) {
+      .unlock-card { padding: 1.6rem 1.35rem; }
+      .unlock-row { flex-direction: column; }
+      .unlock-row .brag-btn { width: 100%; }
+    }
+
     /* FEEDBACK CARD */
     .feedback-card {
       background: white;
@@ -1009,27 +1239,44 @@
       </div>
       <div class="header-tag">
         <span class="live-dot"></span>
-        <span>1 free analysis · First 100 users</span>
+        <span>No signup · Pre-launch</span>
       </div>
     </header>
 
     <section class="hero">
-      <div class="eyebrow">A résumé tool that doesn't lie to you</div>
+      <div class="eyebrow">We don't write your résumé. We tell you what's wrong with it.</div>
       <h1>
-        The <span class="accent">opposite</span> of every other résumé tool.
+        Your résumé is making you look <span class="accent">cheaper</span> than you are.
       </h1>
       <p class="hero-sub">
-        We don't write your résumé for you. We tell you what's <em>wrong</em> with it.
+        Braggy shows why recruiters ignore your résumé, where you sound junior, and what to fix before your <em>next switch</em>.
       </p>
 
+      <a href="#app-section" class="hero-cta">See What's Holding Me Back →</a>
+
       <div class="what-you-get">
-        <h3>Paste your résumé. Get back:</h3>
+        <h3>What you'll actually find out</h3>
         <ul class="what-list">
-          <li><span><strong>An honest score out of 100</strong> — no flattery. So you know exactly where you stand.</span></li>
-          <li><span><strong>Your weak bullets, rewritten</strong> — with real numbers and outcomes, not corporate fluff.</span></li>
-          <li><span><strong>Skills worth learning next</strong> — ranked by how much they could raise your salary.</span></li>
+          <li><span>Why your résumé sounds <strong>less experienced</strong> than you are.</span></li>
+          <li><span>What recruiters judge in the <strong>first 6 seconds</strong>.</span></li>
+          <li><span>Which bullets <strong>weaken your market value</strong>.</span></li>
+          <li><span>How to <strong>sound more senior</strong> — without lying.</span></li>
+          <li><span>Which skills actually <strong>increase compensation</strong> in your role.</span></li>
         </ul>
       </div>
+    </section>
+
+    <section class="pain-preview">
+      <div class="pain-eyebrow">Sound familiar?</div>
+      <h2 class="pain-head">Most résumés fail for the <em>same</em> reasons.</h2>
+      <ul class="pain-list">
+        <li><span class="pain-dash">—</span> Sound task-based instead of impact-based</li>
+        <li><span class="pain-dash">—</span> Hide ownership behind "we" and "team"</li>
+        <li><span class="pain-dash">—</span> Skip measurable outcomes</li>
+        <li><span class="pain-dash">—</span> Read junior despite years of experience</li>
+        <li><span class="pain-dash">—</span> Blend into every other application</li>
+      </ul>
+      <p class="pain-close">Recognize yourself? You're not alone. Most professionals do.</p>
     </section>
 
     <section class="sample" id="sample-section">
@@ -1067,6 +1314,13 @@
       <p class="sample-cta">↓ <span>Try yours below</span> &nbsp;·&nbsp; takes ~10 seconds</p>
     </section>
 
+    <section class="positioning-quote">
+      <blockquote>
+        The skilled often lose to the better self-marketers.
+        <span class="pq-accent">Braggy is for the skilled.</span>
+      </blockquote>
+    </section>
+
     <section class="app" id="app-section">
       <div class="how-steps">
         <span><span class="sn">1.</span> Upload or paste your résumé</span>
@@ -1077,7 +1331,7 @@
         <a href="#sample-section" class="see-example">↑ See an example</a>
       </div>
       <div class="form-card" id="form-state">
-        <h2 class="section-cta-head">Show me your résumé.</h2>
+        <h2 class="section-cta-head">Drop your résumé. Get the truth in ~10 seconds.</h2>
         <label for="resume">
           Upload or paste your résumé
           <small>· PDF or DOCX, or paste text directly. The whole thing.</small>
@@ -1096,27 +1350,11 @@
         ></textarea>
         <div class="privacy-note">We don't store your résumé. It's sent to Claude for analysis and discarded.</div>
 
-        <div class="form-divider"></div>
-
-        <label for="email">
-          Your email
-          <small>· One free analysis per email. We'll save your spot in the first 100.</small>
-        </label>
-        <input
-          type="email"
-          id="email"
-          name="email"
-          placeholder="your@email.com"
-          required
-          autocomplete="email"
-          aria-label="Email address"
-        />
-
         <div class="submit-row">
           <button class="brag-btn" id="submit-btn" onclick="analyze()">
             Brag me →
           </button>
-          <span class="micro">~10 seconds · 1 free analysis per email · Your résumé stays private</span>
+          <span class="micro">~10 seconds · No email needed to start · Your résumé stays private</span>
         </div>
 
         <!-- Cloudflare Turnstile (invisible) -->
@@ -1156,15 +1394,37 @@
           </div>
         </div>
 
-        <h3 class="section-title">Your weakest bullets, rewritten</h3>
-        <div class="rewrite-list" id="rewrite-list"></div>
-
-        <h3 class="section-title">Skills worth learning next</h3>
-        <div class="skill-list" id="skill-list"></div>
-
         <div class="big-fix">
           <div class="big-fix-label">The #1 thing to fix today</div>
           <div class="big-fix-text" id="big-fix-text"></div>
+        </div>
+
+        <h3 class="section-title">Here's one bullet, rewritten</h3>
+        <div class="rewrite-list" id="rewrite-list-preview"></div>
+
+        <div class="unlock-card" id="unlock-card">
+          <div class="unlock-eyebrow">More inside · locked</div>
+          <h3 class="unlock-head" id="unlock-head">There are <span id="unlock-rest-count">2</span> more weak bullets — and the skills that would actually raise your salary.</h3>
+          <p class="unlock-sub">Drop your email to unlock the rest of your analysis. One unlock per email. We'll never spam.</p>
+          <div class="unlock-row">
+            <input
+              type="email"
+              id="unlock-email"
+              placeholder="your@email.com"
+              autocomplete="email"
+              aria-label="Email address to unlock"
+            />
+            <button class="brag-btn" id="unlock-btn" onclick="unlockFullAnalysis()">Unlock the rest →</button>
+          </div>
+          <div class="unlock-error" id="unlock-error"></div>
+        </div>
+
+        <div class="locked-section" id="locked-section">
+          <h3 class="section-title">Your other weak bullets</h3>
+          <div class="rewrite-list" id="rewrite-list-rest"></div>
+
+          <h3 class="section-title">Skills that would actually raise your salary</h3>
+          <div class="skill-list" id="skill-list"></div>
         </div>
 
         <div class="feedback-card" id="feedback-card">
@@ -1190,8 +1450,8 @@
       </div>
 
       <div class="limit-reached" id="limit-reached-state">
-        <h2>You've used your free analysis</h2>
-        <p>One per email — that's the deal while we're in pre-launch. We'll email you when more credits open up.</p>
+        <h2>You've hit today's analysis limit</h2>
+        <p>We cap analyses per day to keep things sustainable while we're in pre-launch. Try again tomorrow — and let us know how it went below.</p>
         <div class="feedback-card" style="margin-top: 0; box-shadow: none; padding: 1.5rem; border-radius: 16px;">
           <div id="limit-feedback-form-inner">
             <div class="feedback-label">While you're here</div>
@@ -1255,6 +1515,7 @@
     let currentRating = 0;
     let limitRating = 0;
     let turnstileToken = '';
+    let analysisData = null;
 
     // Generate a stable browser fingerprint (works without external libraries)
     // This is intentionally lightweight — not a perfect identifier, but enough to slow down casual abuse.
@@ -1303,7 +1564,6 @@
     }
 
     async function analyze() {
-      const email = document.getElementById('email').value.trim();
       const resume = document.getElementById('resume').value.trim();
       const btn = document.getElementById('submit-btn');
 
@@ -1313,12 +1573,7 @@
         showError('Paste your full résumé — we need at least a few bullets to work with.');
         return;
       }
-      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        showError('Please enter a valid email address.');
-        return;
-      }
 
-      currentEmail = email;
       btn.disabled = true;
       btn.textContent = 'Reading...';
       document.getElementById('form-state').style.display = 'none';
@@ -1332,7 +1587,6 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            email,
             resume,
             fingerprint,
             turnstile_token: turnstileToken,
@@ -1342,14 +1596,13 @@
         document.getElementById('loading-state').classList.remove('show');
 
         if (res.status === 429) {
-          // Limit reached — show feedback + waitlist screen
+          // Daily/IP rate limit hit
           document.getElementById('limit-reached-state').classList.add('show');
           return;
         }
 
         if (res.status === 503) {
           document.getElementById('capacity-state').classList.add('show');
-          document.getElementById('capacity-email').value = email;
           return;
         }
 
@@ -1374,6 +1627,10 @@
     }
 
     function renderResults(data) {
+      // Stash the full payload — we'll reveal the rest on email unlock
+      analysisData = data;
+
+      // Score animation
       const scoreEl = document.getElementById('score-value');
       const target = Math.max(0, Math.min(100, parseInt(data.score) || 0));
       let current = 0;
@@ -1385,28 +1642,121 @@
       }, 30);
 
       document.getElementById('score-reason').textContent = data.score_reason || '';
+      document.getElementById('big-fix-text').textContent = data.one_big_fix || '';
 
-      const rl = document.getElementById('rewrite-list');
-      rl.innerHTML = '';
-      (data.rewrites || []).forEach(r => {
-        const div = document.createElement('div');
-        div.className = 'rewrite';
-        div.innerHTML = `
-          <div class="rewrite-row">
-            <div class="rewrite-half before">
-              <h4>You wrote</h4>
-              <p>${escapeHtml(r.before)}</p>
-            </div>
-            <div class="rewrite-arrow">→</div>
-            <div class="rewrite-half after">
-              <h4>Try this instead</h4>
-              <p>${escapeHtml(r.after)}</p>
-            </div>
+      // Preview: render only the FIRST rewrite
+      const rewrites = data.rewrites || [];
+      const rlPreview = document.getElementById('rewrite-list-preview');
+      rlPreview.innerHTML = '';
+      if (rewrites[0]) {
+        rlPreview.appendChild(buildRewriteEl(rewrites[0]));
+      }
+
+      // Update the unlock card "X more weak bullets" count
+      const restCount = Math.max(0, rewrites.length - 1);
+      const countEl = document.getElementById('unlock-rest-count');
+      if (countEl) countEl.textContent = restCount;
+      // If somehow there's only 1 rewrite total, soften the unlock head
+      if (restCount === 0) {
+        document.getElementById('unlock-head').textContent =
+          'See the skills that would actually raise your salary.';
+      }
+
+      // Reset gated UI state in case of a second analysis in the same session
+      document.getElementById('unlock-card').style.display = '';
+      document.getElementById('locked-section').classList.remove('reveal');
+      document.getElementById('unlock-error').classList.remove('show');
+      document.getElementById('rewrite-list-rest').innerHTML = '';
+      document.getElementById('skill-list').innerHTML = '';
+
+      document.getElementById('results-state').classList.add('show');
+      window.scrollTo({ top: document.getElementById('app-section').offsetTop - 40, behavior: 'smooth' });
+    }
+
+    function buildRewriteEl(r) {
+      const div = document.createElement('div');
+      div.className = 'rewrite';
+      div.innerHTML = `
+        <div class="rewrite-row">
+          <div class="rewrite-half before">
+            <h4>You wrote</h4>
+            <p>${escapeHtml(r.before)}</p>
           </div>
-        `;
-        rl.appendChild(div);
-      });
+          <div class="rewrite-arrow">→</div>
+          <div class="rewrite-half after">
+            <h4>Try this instead</h4>
+            <p>${escapeHtml(r.after)}</p>
+          </div>
+        </div>
+      `;
+      return div;
+    }
 
+    async function unlockFullAnalysis() {
+      const emailInput = document.getElementById('unlock-email');
+      const email = emailInput.value.trim();
+      const btn = document.getElementById('unlock-btn');
+      const errEl = document.getElementById('unlock-error');
+
+      errEl.classList.remove('show');
+
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        showUnlockError('Please enter a valid email address.');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Unlocking...';
+
+      try {
+        const res = await fetch('/api/unlock', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+
+        let data = {};
+        try { data = await res.json(); } catch (_) {}
+
+        if (res.status === 429) {
+          showUnlockError(data.error || 'This email has already unlocked an analysis. Try another.');
+          btn.disabled = false;
+          btn.textContent = 'Unlock the rest →';
+          return;
+        }
+
+        if (!res.ok) {
+          showUnlockError(data.error || 'Something went wrong. Try again.');
+          btn.disabled = false;
+          btn.textContent = 'Unlock the rest →';
+          return;
+        }
+
+        currentEmail = email;
+        revealLockedContent();
+      } catch (e) {
+        showUnlockError('Network error. Check your connection and try again.');
+        btn.disabled = false;
+        btn.textContent = 'Unlock the rest →';
+      }
+    }
+
+    function showUnlockError(msg) {
+      const errEl = document.getElementById('unlock-error');
+      errEl.textContent = msg;
+      errEl.classList.add('show');
+    }
+
+    function revealLockedContent() {
+      const data = analysisData || {};
+
+      // Render the remaining rewrites
+      const rest = (data.rewrites || []).slice(1);
+      const rlRest = document.getElementById('rewrite-list-rest');
+      rlRest.innerHTML = '';
+      rest.forEach(r => rlRest.appendChild(buildRewriteEl(r)));
+
+      // Render skills
       const sl = document.getElementById('skill-list');
       sl.innerHTML = '';
       (data.skill_gaps || []).forEach((s, i) => {
@@ -1423,9 +1773,17 @@
         sl.appendChild(div);
       });
 
-      document.getElementById('big-fix-text').textContent = data.one_big_fix || '';
-      document.getElementById('results-state').classList.add('show');
-      window.scrollTo({ top: document.getElementById('app-section').offsetTop - 40, behavior: 'smooth' });
+      // Hide unlock card, reveal locked section
+      document.getElementById('unlock-card').style.display = 'none';
+      document.getElementById('locked-section').classList.add('reveal');
+
+      // Smooth-scroll to the freshly-revealed section
+      const target = document.getElementById('locked-section');
+      if (target) {
+        setTimeout(() => {
+          window.scrollTo({ top: target.offsetTop - 40, behavior: 'smooth' });
+        }, 80);
+      }
     }
 
     function escapeHtml(str) {
@@ -1500,7 +1858,7 @@
             'Prefer': 'return=minimal',
           },
           body: JSON.stringify({
-            email: currentEmail || document.getElementById('email').value.trim(),
+            email: currentEmail || null,
             rating: limitRating,
             comment: comment || null,
           }),
