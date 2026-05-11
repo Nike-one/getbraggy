@@ -752,89 +752,6 @@
       letter-spacing: -0.01em;
     }
 
-    /* DETECTED PROFILE CHIPS — sits above the score card */
-    .profile-chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-      margin-bottom: 1.25rem;
-    }
-    .profile-chips:empty { display: none; }
-    .profile-chip {
-      font-family: 'Geist Mono', monospace;
-      font-size: 0.72rem;
-      letter-spacing: 0.05em;
-      color: var(--muted);
-      background: var(--cream-deep);
-      border: 1px solid rgba(22, 20, 19, 0.08);
-      padding: 0.4rem 0.8rem;
-      border-radius: 999px;
-    }
-    .profile-chip strong { color: var(--ink); font-weight: 500; }
-
-    /* MARKET REALITY — preview block between score and big-fix */
-    .reality-card {
-      background: var(--cream-deep);
-      border-left: 3px solid var(--orange);
-      border-radius: 0 16px 16px 0;
-      padding: 1.5rem 1.75rem;
-      margin-bottom: 2rem;
-    }
-    .reality-label {
-      font-family: 'Geist Mono', monospace;
-      font-size: 0.7rem;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: var(--orange);
-      margin-bottom: 0.7rem;
-    }
-    .reality-text {
-      font-family: 'Instrument Serif', serif;
-      font-size: clamp(1.15rem, 2.4vw, 1.45rem);
-      line-height: 1.35;
-      letter-spacing: -0.005em;
-      color: var(--ink);
-    }
-
-    /* RED FLAGS — list in locked section */
-    .red-flag-list {
-      display: flex;
-      flex-direction: column;
-      gap: 0.85rem;
-      margin-bottom: 3rem;
-    }
-    .red-flag {
-      background: white;
-      border: 1px solid rgba(22, 20, 19, 0.12);
-      border-left-width: 4px;
-      border-radius: 14px;
-      padding: 1.1rem 1.3rem;
-      display: grid;
-      grid-template-columns: auto 1fr;
-      gap: 1rem;
-      align-items: start;
-    }
-    .red-flag.high   { border-left-color: var(--orange); }
-    .red-flag.medium { border-left-color: var(--ink); }
-    .red-flag.low    { border-left-color: var(--muted); }
-
-    .flag-severity {
-      font-family: 'Geist Mono', monospace;
-      font-size: 0.65rem;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      padding: 0.35rem 0.6rem;
-      border-radius: 6px;
-      font-weight: 500;
-      white-space: nowrap;
-    }
-    .flag-severity.high   { color: white;        background: var(--orange); }
-    .flag-severity.medium { color: var(--cream);  background: var(--ink); }
-    .flag-severity.low    { color: var(--muted);  background: rgba(107, 99, 92, 0.12); }
-
-    .flag-issue { font-weight: 500; font-size: 1rem; margin-bottom: 0.3rem; line-height: 1.35; }
-    .flag-fix   { font-size: 0.88rem; color: var(--muted); line-height: 1.45; }
-
     .results-actions {
       display: flex;
       gap: 1rem;
@@ -1487,8 +1404,6 @@
           <h2 class="results-title">Here's what we found.</h2>
         </div>
 
-        <div class="profile-chips" id="profile-chips"></div>
-
         <div class="score-card">
           <div class="score-num">
             <span id="score-value">0</span><span class="out-of">/100</span>
@@ -1497,11 +1412,6 @@
             <div class="score-label">Your Brag Score</div>
             <div class="score-reason" id="score-reason"></div>
           </div>
-        </div>
-
-        <div class="reality-card" id="reality-card" style="display:none;">
-          <div class="reality-label">What this costs you in the Indian market</div>
-          <div class="reality-text" id="reality-text"></div>
         </div>
 
         <div class="big-fix">
@@ -1532,11 +1442,6 @@
         <div class="locked-section" id="locked-section">
           <h3 class="section-title">Your other weak bullets</h3>
           <div class="rewrite-list" id="rewrite-list-rest"></div>
-
-          <div id="red-flags-block" style="display:none;">
-            <h3 class="section-title">Red flags hurting your shortlist rate</h3>
-            <div class="red-flag-list" id="red-flag-list"></div>
-          </div>
 
           <h3 class="section-title">Skills that would actually raise your salary</h3>
           <div class="skill-list" id="skill-list"></div>
@@ -1777,64 +1682,6 @@
       document.getElementById('score-reason').textContent = data.score_reason || '';
       document.getElementById('big-fix-text').textContent = data.one_big_fix || '';
 
-      // Detected profile chips
-      const profile = data.detected_profile || {};
-      const chipsEl = document.getElementById('profile-chips');
-      chipsEl.innerHTML = '';
-      const PROFILE_LABELS = {
-        seniority: {
-          fresher: 'Fresher', early: 'Early-career (1-3y)', mid: 'Mid-level (3-7y)',
-          senior: 'Senior (7-15y)', leadership: 'Leadership (15y+)',
-        },
-        role_family: {
-          software_engineering: 'Software engineering', data_analytics_science: 'Data / analytics',
-          product_management: 'Product management', design: 'Design',
-          devops_cloud: 'DevOps / cloud', qa_testing: 'QA / testing',
-          sales: 'Sales', marketing: 'Marketing', business_development: 'Business development',
-          operations: 'Operations', finance_accounts: 'Finance / accounts', hr: 'HR',
-          consulting: 'Consulting', customer_success: 'Customer success',
-          legal: 'Legal', content: 'Content', other: 'Other',
-        },
-        likely_track: {
-          service_it: 'Targeting service IT', product: 'Targeting product cos',
-          gcc_mnc: 'Targeting GCCs / MNCs', startup_funded: 'Targeting funded startups',
-          non_tech_corporate: 'Targeting corporate (non-tech)',
-          big_4_consulting: 'Targeting consulting',
-          government_psu: 'Targeting govt / PSU',
-          freelance_independent: 'Independent / freelance',
-        },
-      };
-      const makeChip = (raw, key) => {
-        if (!raw) return '';
-        const text = (PROFILE_LABELS[key] && PROFILE_LABELS[key][raw]) || raw;
-        return `<span class="profile-chip"><strong>${escapeHtml(text)}</strong></span>`;
-      };
-      chipsEl.innerHTML =
-        makeChip(profile.seniority, 'seniority') +
-        makeChip(profile.role_family, 'role_family') +
-        makeChip(profile.likely_track, 'likely_track');
-
-      // Recruiter reaction
-      const reactionCard = document.getElementById('reaction-card');
-      const reactionText = document.getElementById('reaction-text');
-
-      if (data.recruiter_reaction) {
-        reactionText.textContent = data.recruiter_reaction;
-        reactionCard.style.display = '';
-      } else {
-        reactionCard.style.display = 'none';
-      }
-
-      // Market reality
-      const realityCard = document.getElementById('reality-card');
-      const realityText = document.getElementById('reality-text');
-      if (data.market_reality) {
-        realityText.textContent = data.market_reality;
-        realityCard.style.display = '';
-      } else {
-        realityCard.style.display = 'none';
-      }
-
       // Preview: render only the FIRST rewrite
       const rewrites = data.rewrites || [];
       const rlPreview = document.getElementById('rewrite-list-preview');
@@ -1850,7 +1697,7 @@
       // If somehow there's only 1 rewrite total, soften the unlock head
       if (restCount === 0) {
         document.getElementById('unlock-head').textContent =
-          'Unlock the exact fixes making recruiters reject this résumé.';
+          'See the skills that would actually raise your salary.';
       }
 
       // Reset gated UI state in case of a second analysis in the same session
@@ -1859,8 +1706,6 @@
       document.getElementById('unlock-error').classList.remove('show');
       document.getElementById('rewrite-list-rest').innerHTML = '';
       document.getElementById('skill-list').innerHTML = '';
-      document.getElementById('red-flag-list').innerHTML = '';
-      document.getElementById('red-flags-block').style.display = 'none';
 
       document.getElementById('results-state').classList.add('show');
       window.scrollTo({ top: document.getElementById('app-section').offsetTop - 40, behavior: 'smooth' });
@@ -1951,31 +1796,6 @@
       const rlRest = document.getElementById('rewrite-list-rest');
       rlRest.innerHTML = '';
       rest.forEach(r => rlRest.appendChild(buildRewriteEl(r)));
-
-      // India red flags
-      const redFlags = data.india_red_flags || [];
-      const rfBlock = document.getElementById('red-flags-block');
-      const rfList = document.getElementById('red-flag-list');
-      rfList.innerHTML = '';
-      if (redFlags.length > 0) {
-        redFlags.forEach(f => {
-          const sev = (f.severity || 'low').toLowerCase();
-          const safeSev = ['high', 'medium', 'low'].includes(sev) ? sev : 'low';
-          const div = document.createElement('div');
-          div.className = `red-flag ${safeSev}`;
-          div.innerHTML = `
-            <span class="flag-severity ${safeSev}">${escapeHtml(safeSev)}</span>
-            <div>
-              <div class="flag-issue">${escapeHtml(f.issue || '')}</div>
-              <div class="flag-fix">${escapeHtml(f.fix || '')}</div>
-            </div>
-          `;
-          rfList.appendChild(div);
-        });
-        rfBlock.style.display = '';
-      } else {
-        rfBlock.style.display = 'none';
-      }
 
       // Render skills
       const sl = document.getElementById('skill-list');
