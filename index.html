@@ -1566,8 +1566,8 @@
 
       <div class="loading" id="loading-state">
         <div class="loading-spinner"></div>
-        <div class="loading-msg">Reading your résumé...</div>
-        <div class="loading-sub">This takes about 10 seconds</div>
+        <div class="loading-msg" id="loading-msg">Reading your résumé...</div>
+        <div class="loading-sub" id="loading-sub">Usually 15–25 seconds</div>
       </div>
 
       <div class="capacity" id="capacity-state">
@@ -1854,20 +1854,20 @@
           }),
         });
 
-        document.getElementById('loading-state').classList.remove('show');
-
         if (res.status === 429) {
-          // Daily/IP rate limit hit
+          document.getElementById('loading-state').classList.remove('show');
           document.getElementById('limit-reached-state').classList.add('show');
           return;
         }
 
         if (res.status === 503) {
+          document.getElementById('loading-state').classList.remove('show');
           document.getElementById('capacity-state').classList.add('show');
           return;
         }
 
         if (!res.ok) {
+          document.getElementById('loading-state').classList.remove('show');
           const errData = await res.json().catch(() => ({}));
           document.getElementById('form-state').style.display = 'block';
           btn.disabled = false;
@@ -1875,6 +1875,25 @@
           showError(errData.error || 'Something went wrong. Try again.');
           return;
         }
+
+        // Keep loader visible during streaming — cycle messages so it feels alive
+        const streamMsgs = [
+          'Reading your experience...',
+          'Scoring your bullets...',
+          'Spotting weak points...',
+          'Writing your rewrites...',
+          'Checking market reality...',
+          'Calculating salary gaps...',
+          'Drafting recruiter verdict...',
+        ];
+        let streamMsgIdx = 0;
+        const loadingMsgEl = document.getElementById('loading-msg');
+        const loadingSubEl = document.getElementById('loading-sub');
+        if (loadingSubEl) loadingSubEl.textContent = 'Usually 15–25 seconds';
+        const streamMsgInterval = setInterval(() => {
+          streamMsgIdx = (streamMsgIdx + 1) % streamMsgs.length;
+          if (loadingMsgEl) loadingMsgEl.textContent = streamMsgs[streamMsgIdx];
+        }, 2800);
 
         // Stream the plain-text JSON from the API, parse when done
         const reader = res.body.getReader();
@@ -1885,6 +1904,9 @@
           if (done) break;
           accumulated += dec.decode(value, { stream: true });
         }
+
+        clearInterval(streamMsgInterval);
+        document.getElementById('loading-state').classList.remove('show');
 
         let data;
         try {
