@@ -1814,7 +1814,18 @@
         makeChip(profile.role_family, 'role_family') +
         makeChip(profile.likely_track, 'likely_track');
 
-      // Market reality (preview)
+      // Recruiter reaction
+      const reactionCard = document.getElementById('reaction-card');
+      const reactionText = document.getElementById('reaction-text');
+
+      if (data.recruiter_reaction) {
+        reactionText.textContent = data.recruiter_reaction;
+        reactionCard.style.display = '';
+      } else {
+        reactionCard.style.display = 'none';
+      }
+
+      // Market reality
       const realityCard = document.getElementById('reality-card');
       const realityText = document.getElementById('reality-text');
       if (data.market_reality) {
@@ -1839,7 +1850,7 @@
       // If somehow there's only 1 rewrite total, soften the unlock head
       if (restCount === 0) {
         document.getElementById('unlock-head').textContent =
-          'See the skills that would actually raise your salary.';
+          'Unlock the exact fixes making recruiters reject this résumé.';
       }
 
       // Reset gated UI state in case of a second analysis in the same session
