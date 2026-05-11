@@ -350,15 +350,31 @@ export default async function handler(req) {
 
     // Stream Anthropic SSE → extract text deltas → pipe to client as plain text.
     // Client accumulates the full JSON string, then parses it when the stream ends.
+    // Buffer across chunks so SSE lines split at chunk boundaries are not dropped.
     const encoder = new TextEncoder();
     const decoder = new TextDecoder();
+    let sseBuffer = '';
     const { readable, writable } = new TransformStream({
       transform(chunk, controller) {
-        const lines = decoder.decode(chunk, { stream: true }).split('\n');
+        sseBuffer += decoder.decode(chunk, { stream: true });
+        const lines = sseBuffer.split('\n');
+        sseBuffer = lines.pop() ?? ''; // keep incomplete last line in buffer
         for (const line of lines) {
           if (!line.startsWith('data: ')) continue;
           const jsonStr = line.slice(6).trim();
           if (!jsonStr || jsonStr === '[DONE]') continue;
+          try {
+            const event = JSON.parse(jsonStr);
+            if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta') {
+              controller.enqueue(encoder.encode(event.delta.text));
+            }
+          } catch {}
+        }
+      },
+      flush(controller) {
+        // process any remaining buffered line
+        if (sseBuffer.startsWith('data: ')) {
+          const jsonStr = sseBuffer.slice(6).trim();
           try {
             const event = JSON.parse(jsonStr);
             if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta') {
