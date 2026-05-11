@@ -104,13 +104,13 @@ export default async function handler(req, res) {
 
   try {
     const {
-      resumeText = '',
+      resume = '',
       email = '',
       fingerprint = '',
       turnstileToken = ''
     } = req.body || {};
 
-    if (!resumeText?.trim()) {
+    if (!resume?.trim()) {
       return json(res, 400, {
         error: 'Resume content missing'
       });
@@ -130,7 +130,7 @@ export default async function handler(req, res) {
       });
     }
 
-    const prompt = `Resume:\n\n${resumeText}`;
+    const prompt = `Resume:\n\n${resume}`;
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
