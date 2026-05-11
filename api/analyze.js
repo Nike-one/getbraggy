@@ -58,6 +58,7 @@ Your job:
     No learning advice. No roadmaps. Just what's missing and what it's worth.
 
 11. RECRUITER VERDICT: One honest closing paragraph. What happens to this résumé in a real hiring pipeline. What needs to change to break into the next tier. No motivation. No generic praise.
+No skill suggestions — focus on presentation and positioning changes only.
 
 Return strictly this JSON and nothing else:
 
@@ -66,7 +67,7 @@ Return strictly this JSON and nothing else:
   "score_reason": "<sub-scores then recruiter implication>",
   "profile_chips": ["<tag>", "<tag>", "<tag>"],
   "recruiter_reaction": "<paragraph>",
-  "red_flags": ["<specific flag>", "<specific flag>", "<specific flag>"],
+  "red_flags": ["<specific flag>", "<specific flag>"],
   "market_reality_partial": "<one sentence with ₹ range>",
   "market_reality_full": "<2-3 sentences>",
   "rewrites": [
@@ -85,8 +86,10 @@ Rules:
 - Honest, not flattering. Weak résumé should score 20-40.
 - Plain English. An average graduate should understand every word.
 - Never invent the user's job title or company. Only invent numbers in rewrites, marked [estimate].
+- score_reason: cite sub-scores (e.g. "Specificity 8/25, Action 12/25, Outcome 6/25, Density 14/25 -> 40") then one recruiter implication sentence.
 - red_flags: exactly 2-3. Specific. Not "lacks metrics" — give the actual count or pattern.
-- profile_chips: 3-4 max. Omit uncertain ones.`;
+- profile_chips: 3-4 max. Omit uncertain ones.
+- All field values must be plain text strings — no markdown formatting inside values.`;
 
 export default async function handler(req) {
   if (req.method !== 'POST') {
@@ -289,7 +292,7 @@ export default async function handler(req) {
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 2000,
+        max_tokens: 4000,
         system: SYSTEM_PROMPT,
         messages: [
           { role: 'user', content: `Here is my résumé:\n\n${resume}` },
