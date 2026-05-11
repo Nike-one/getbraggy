@@ -1928,13 +1928,13 @@
         rlPreview.appendChild(buildRewriteEl(rewrites[0]));
       }
 
-      // Update unlock card headline
+      // Update unlock card headline — always rebuild so span is never orphaned
       const restCount = Math.max(0, rewrites.length - 1);
-      const countEl = document.getElementById('unlock-rest-count');
-      if (countEl) countEl.textContent = restCount;
+      const unlockHead = document.getElementById('unlock-head');
       if (restCount === 0) {
-        document.getElementById('unlock-head').textContent =
-          'Unlock full market reality, salary positioning, and recruiter verdict.';
+        unlockHead.textContent = 'Unlock full market reality, salary positioning, and recruiter verdict.';
+      } else {
+        unlockHead.innerHTML = `Unlock full market reality, <span id="unlock-rest-count">${restCount}</span> more rewrites, salary positioning, and recruiter verdict.`;
       }
 
       // Reset locked section state (handle second analysis in same session)
