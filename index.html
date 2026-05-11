@@ -718,7 +718,6 @@
       font-weight: 500;
     }
     .skill-name { font-weight: 500; font-size: 1.05rem; margin-bottom: 0.2rem; }
-    .skill-why { font-size: 0.88rem; color: var(--muted); line-height: 1.45; }
     .skill-lift {
       font-family: 'Geist Mono', monospace;
       font-size: 0.8rem;
@@ -2013,14 +2012,14 @@
         if (res.status === 429) {
           showUnlockError(data.error || 'This email has already unlocked an analysis. Try another.');
           btn.disabled = false;
-          btn.textContent = 'Unlock the rest →';
+          btn.textContent = 'Unlock →';
           return;
         }
 
         if (!res.ok) {
           showUnlockError(data.error || 'Something went wrong. Try again.');
           btn.disabled = false;
-          btn.textContent = 'Unlock the rest →';
+          btn.textContent = 'Unlock →';
           return;
         }
 
@@ -2029,7 +2028,7 @@
       } catch (e) {
         showUnlockError('Network error. Check your connection and try again.');
         btn.disabled = false;
-        btn.textContent = 'Unlock the rest →';
+        btn.textContent = 'Unlock →';
       }
     }
 
