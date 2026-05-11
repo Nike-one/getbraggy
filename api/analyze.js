@@ -8,8 +8,7 @@ import { isDisposableEmail } from './_disposable-domains.js';
 const DAILY_CAP = 30;
 
 export const config = {
-  runtime: 'nodejs',
-  maxDuration: 60,
+  runtime: 'edge',
 };
 
 const SYSTEM_PROMPT = `You are Braggy — a brutally honest recruiter-perception engine for Indian professionals. The user will paste their résumé. Return JSON only, no preamble, no markdown.
@@ -294,6 +293,7 @@ export default async function handler(req) {
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
         max_tokens: 4000,
+        stream: true,
         system: SYSTEM_PROMPT,
         messages: [
           { role: 'user', content: `Here is my résumé:\n\n${resume}` },
@@ -348,24 +348,32 @@ export default async function handler(req) {
       );
     }
 
-    const data = await aiRes.json();
-    const text = data?.content?.[0]?.text || '';
+    // Stream Anthropic SSE → extract text deltas → pipe to client as plain text.
+    // Client accumulates the full JSON string, then parses it when the stream ends.
+    const encoder = new TextEncoder();
+    const decoder = new TextDecoder();
+    const { readable, writable } = new TransformStream({
+      transform(chunk, controller) {
+        const lines = decoder.decode(chunk, { stream: true }).split('\n');
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const jsonStr = line.slice(6).trim();
+          if (!jsonStr || jsonStr === '[DONE]') continue;
+          try {
+            const event = JSON.parse(jsonStr);
+            if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta') {
+              controller.enqueue(encoder.encode(event.delta.text));
+            }
+          } catch {}
+        }
+      },
+    });
 
-    let parsed;
-    try {
-      // Defensive: strip any accidental code fences
-      const cleaned = text.replace(/```json\s*|\s*```/g, '').trim();
-      parsed = JSON.parse(cleaned);
-    } catch {
-      return new Response(
-        JSON.stringify({ error: "We had trouble reading the result. Try again — usually works on second go." }),
-        { status: 502, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
+    aiRes.body.pipeTo(writable).catch(() => {});
 
-    return new Response(JSON.stringify(parsed), {
+    return new Response(readable, {
       status: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'text/plain; charset=utf-8' },
     });
   } catch (e) {
     console.error('handler error', e);
