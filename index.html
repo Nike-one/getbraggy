@@ -1246,6 +1246,178 @@
       pointer-events: none;
     }
     .dev-badge.show { display: block; }
+
+    /* Profile chips */
+    .profile-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 1.75rem;
+    }
+    .chip {
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.72rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 0.35rem 0.85rem;
+      border-radius: 999px;
+      background: rgba(22, 20, 19, 0.07);
+      color: var(--ink);
+      border: 1px solid rgba(22, 20, 19, 0.15);
+    }
+
+    /* Recruiter reaction */
+    .recruiter-reaction {
+      background: var(--ink);
+      color: var(--cream);
+      border-radius: 16px;
+      padding: 1.5rem 1.75rem;
+      margin-bottom: 2rem;
+    }
+    .recruiter-reaction-label {
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--orange);
+      margin-bottom: 0.65rem;
+    }
+    .recruiter-reaction p {
+      font-family: 'Instrument Serif', serif;
+      font-style: italic;
+      font-size: clamp(1.05rem, 2vw, 1.25rem);
+      line-height: 1.55;
+      color: var(--cream);
+    }
+
+    /* Red flags */
+    .red-flags-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      margin-bottom: 2rem;
+    }
+    .red-flag-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.7rem;
+      font-size: 0.97rem;
+      line-height: 1.45;
+      color: var(--ink);
+    }
+    .red-flag-item::before {
+      content: '!';
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: var(--orange-deep);
+      background: rgba(232, 84, 28, 0.12);
+      min-width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    /* Market reality partial (tease) */
+    .market-partial {
+      font-family: 'Instrument Serif', serif;
+      font-style: italic;
+      font-size: 1.1rem;
+      color: var(--muted);
+      border-left: 3px solid var(--orange);
+      padding-left: 1rem;
+      margin-bottom: 2rem;
+      line-height: 1.5;
+    }
+
+    /* Blurred rewrite preview */
+    .rewrite-list-blurred .rewrite {
+      position: relative;
+      pointer-events: none;
+      user-select: none;
+    }
+    .rewrite-list-blurred .rewrite::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      backdrop-filter: blur(5px);
+      background: rgba(242, 237, 228, 0.4);
+      border-radius: 16px;
+    }
+
+    /* Market reality full (locked) */
+    .market-reality-full {
+      background: var(--cream-deep);
+      border: 1px solid rgba(22, 20, 19, 0.15);
+      border-radius: 16px;
+      padding: 1.5rem 1.75rem;
+      margin-bottom: 2.5rem;
+    }
+    .market-reality-label {
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.65rem;
+    }
+    .market-reality-full p {
+      font-size: 1rem;
+      line-height: 1.65;
+      color: var(--ink);
+    }
+
+    /* Salary positioning */
+    .salary-positioning {
+      background: rgba(45, 122, 62, 0.07);
+      border: 1px solid rgba(45, 122, 62, 0.2);
+      border-radius: 14px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 2.5rem;
+    }
+    .salary-positioning-label {
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--green);
+      margin-bottom: 0.5rem;
+    }
+    .salary-positioning p {
+      font-size: 1rem;
+      line-height: 1.5;
+      color: var(--ink);
+      font-weight: 500;
+    }
+
+    /* Recruiter verdict */
+    .recruiter-verdict {
+      background: var(--ink);
+      color: var(--cream);
+      border-radius: 20px;
+      padding: 2rem;
+      margin-top: 2rem;
+      margin-bottom: 2rem;
+    }
+    .recruiter-verdict-label {
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--orange);
+      margin-bottom: 0.65rem;
+    }
+    .recruiter-verdict p {
+      font-size: 1rem;
+      line-height: 1.65;
+      color: rgba(242, 237, 228, 0.88);
+    }
   </style>
   <!-- analytics feature live -->
   <script defer src="https://braggy-analytics.vercel.app/script.js" data-website-id="c3d97865-f40b-4e66-aa20-c5051cdd2d7a"></script>
