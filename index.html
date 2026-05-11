@@ -1576,6 +1576,7 @@
           <h2 class="results-title">Here's what we found.</h2>
         </div>
 
+        <!-- Score -->
         <div class="score-card">
           <div class="score-num">
             <span id="score-value">0</span><span class="out-of">/100</span>
@@ -1586,18 +1587,31 @@
           </div>
         </div>
 
-        <div class="big-fix">
-          <div class="big-fix-label">The #1 thing to fix today</div>
-          <div class="big-fix-text" id="big-fix-text"></div>
+        <!-- Profile chips -->
+        <div class="profile-chips" id="profile-chips"></div>
+
+        <!-- Recruiter reaction -->
+        <div class="recruiter-reaction">
+          <div class="recruiter-reaction-label">Recruiter's first impression</div>
+          <p id="recruiter-reaction-text"></p>
         </div>
 
-        <h3 class="section-title">Here's one bullet, rewritten</h3>
-        <div class="rewrite-list" id="rewrite-list-preview"></div>
+        <!-- Red flags -->
+        <h3 class="section-title">Red flags recruiters notice</h3>
+        <ul class="red-flags-list" id="red-flags-list"></ul>
 
+        <!-- Market reality tease -->
+        <div class="market-partial" id="market-partial"></div>
+
+        <!-- Blurred rewrite preview -->
+        <h3 class="section-title">A taste of your rewrites</h3>
+        <div class="rewrite-list rewrite-list-blurred" id="rewrite-list-preview"></div>
+
+        <!-- Unlock card -->
         <div class="unlock-card" id="unlock-card">
           <div class="unlock-eyebrow">More inside · locked</div>
-          <h3 class="unlock-head" id="unlock-head">There are <span id="unlock-rest-count">2</span> more weak bullets — and the skills that would actually raise your salary.</h3>
-          <p class="unlock-sub">Drop your email to unlock the rest of your analysis. One unlock per email. We'll never spam.</p>
+          <h3 class="unlock-head" id="unlock-head">Unlock full market reality, <span id="unlock-rest-count">2</span> more rewrites, salary positioning, and recruiter verdict.</h3>
+          <p class="unlock-sub">Drop your email. One unlock per email. We'll never spam.</p>
           <div class="unlock-row">
             <input
               type="email"
@@ -1606,19 +1620,47 @@
               autocomplete="email"
               aria-label="Email address to unlock"
             />
-            <button class="brag-btn" id="unlock-btn" onclick="unlockFullAnalysis()">Unlock the rest →</button>
+            <button class="brag-btn" id="unlock-btn" onclick="unlockFullAnalysis()">Unlock →</button>
           </div>
           <div class="unlock-error" id="unlock-error"></div>
         </div>
 
+        <!-- Locked section (revealed on email unlock) -->
         <div class="locked-section" id="locked-section">
-          <h3 class="section-title">Your other weak bullets</h3>
+          <!-- Market reality full -->
+          <div class="market-reality-full">
+            <div class="market-reality-label">Your market reality</div>
+            <p id="market-reality-full-text"></p>
+          </div>
+
+          <!-- All rewrites -->
+          <h3 class="section-title">All your weak bullets, rewritten</h3>
           <div class="rewrite-list" id="rewrite-list-rest"></div>
 
-          <h3 class="section-title">Skills that would actually raise your salary</h3>
+          <!-- Big fix -->
+          <div class="big-fix">
+            <div class="big-fix-label">The #1 thing to fix today</div>
+            <div class="big-fix-text" id="big-fix-text"></div>
+          </div>
+
+          <!-- Salary positioning -->
+          <div class="salary-positioning">
+            <div class="salary-positioning-label">Salary positioning</div>
+            <p id="salary-positioning-text"></p>
+          </div>
+
+          <!-- Skill gaps -->
+          <h3 class="section-title">Skills worth adding for salary</h3>
           <div class="skill-list" id="skill-list"></div>
+
+          <!-- Recruiter verdict -->
+          <div class="recruiter-verdict">
+            <div class="recruiter-verdict-label">Recruiter verdict</div>
+            <p id="recruiter-verdict-text"></p>
+          </div>
         </div>
 
+        <!-- Feedback -->
         <div class="feedback-card" id="feedback-card">
           <button class="feedback-close" onclick="dismissFeedback()" aria-label="Dismiss">×</button>
           <div id="feedback-form-inner">
