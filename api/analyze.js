@@ -8,7 +8,8 @@ import { isDisposableEmail } from './_disposable-domains.js';
 const DAILY_CAP = 30;
 
 export const config = {
-  runtime: 'edge',
+  runtime: 'nodejs',
+  maxDuration: 60,
 };
 
 const SYSTEM_PROMPT = `You are Braggy — a brutally honest recruiter-perception engine for Indian professionals. The user will paste their résumé. Return JSON only, no preamble, no markdown.
