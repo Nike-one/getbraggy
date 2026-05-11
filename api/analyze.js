@@ -110,9 +110,9 @@ export default async function handler(req, res) {
       turnstileToken = ''
     } = req.body || {};
 
-    if (!resumeText || resumeText.trim().length < 120) {
+    if (!resumeText?.trim()) {
       return json(res, 400, {
-        error: 'Resume text too short'
+        error: 'Resume content missing'
       });
     }
 
