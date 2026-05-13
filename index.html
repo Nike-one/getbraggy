@@ -1750,6 +1750,7 @@
     </div>
   </footer>
 
+  <script src="/share-roast.js" defer></script>
   <script>
     const SUPABASE_URL = 'https://vibklatozzpbyqcljzxv.supabase.co';
     const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpYmtsYXRvenpwYnlxY2xqenh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwMDkwOTcsImV4cCI6MjA5MzU4NTA5N30.SJxrmZJtGJJDhk40sqy0EwzilIdSYqV3ts25uliUPfg';
@@ -2121,6 +2122,7 @@
       // Hide unlock card, reveal locked section
       document.getElementById('unlock-card').style.display = 'none';
       document.getElementById('locked-section').classList.add('reveal');
+      window.BraggyShare?.render(analysisData.score);
 
       const target = document.getElementById('locked-section');
       if (target) {
