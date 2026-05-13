@@ -29,7 +29,6 @@
       padding: 1.75rem 2rem;
       margin: 2.5rem 0 2rem;
       position: relative;
-      overflow: hidden;
       box-shadow: 6px 6px 0 var(--orange, #E8541C);
     }
     .share-roast::before {
