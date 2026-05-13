@@ -162,10 +162,10 @@
 
   function buildShareText(score) {
     let verdict;
-    if (score >= 75) verdict = "and grudgingly admitted I know what I'm doing.";
-    else if (score >= 55) verdict = "and told me I'm leaving money on the table.";
-    else if (score >= 35) verdict = "and told me I sound like a junior. Brutal.";
-    else verdict = "and basically said my résumé is doing me dirty.";
+    if (score >= 75) verdict = "and said my résumé is solid — but I'm still underselling myself to recruiters.";
+    else if (score >= 55) verdict = "and said I'm worth at least one job level more than my résumé implies.";
+    else if (score >= 35) verdict = "and said I write like a fresher despite real experience. That stings.";
+    else verdict = "and said my résumé is actively costing me interviews. Fixing it now.";
     return `Braggy just gave my résumé a ${score}/100 ${verdict} Get yours roasted: ${SHARE_URL}`;
   }
 
