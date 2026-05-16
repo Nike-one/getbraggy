@@ -1852,6 +1852,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       document.getElementById('loading-state').classList.add('show');
       window.scrollTo({ top: document.getElementById('app-section').offsetTop - 40, behavior: 'smooth' });
 
+      window.dataLayer = window.dataLayer || [];
+      dataLayer.push({ event: 'resume_submitted' });
+
       try {
         const fingerprint = await getFingerprint();
 
@@ -2013,6 +2016,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       document.getElementById('recruiter-verdict-text').textContent = '';
 
       document.getElementById('results-state').classList.add('show');
+      window.dataLayer = window.dataLayer || [];
+      dataLayer.push({ event: 'analysis_completed', score: data.score || 0 });
       window.scrollTo({ top: document.getElementById('app-section').offsetTop - 40, behavior: 'smooth' });
     }
 
@@ -2079,6 +2084,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         }
 
         currentEmail = email;
+        window.dataLayer = window.dataLayer || [];
+        dataLayer.push({ event: 'email_submitted' });
         revealLockedContent();
       } catch (e) {
         showUnlockError('Network error. Check your connection and try again.');
@@ -2244,6 +2251,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           body: JSON.stringify({ email, source: 'capacity' }),
         });
       } catch {}
+      window.dataLayer = window.dataLayer || [];
+      dataLayer.push({ event: 'waitlist_joined' });
       document.getElementById('capacity-success').style.display = 'block';
       document.getElementById('capacity-email').disabled = true;
     }
