@@ -1084,7 +1084,7 @@
       font-family: 'Playfair Display', serif;
       font-style: italic;
       font-size: 1.1rem;
-      color: var(--text-muted);
+      color: var(--text-secondary);
       border-left: 3px solid var(--accent);
       padding-left: 1.25rem;
       margin-bottom: 1.5rem;
@@ -1134,16 +1134,6 @@
 
     .rewrite-list-blurred .rewrite {
       position: relative;
-      pointer-events: none;
-      user-select: none;
-    }
-    .rewrite-list-blurred .rewrite::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      backdrop-filter: blur(8px) saturate(1.2);
-      background: rgba(10,10,10,0.4);
-      border-radius: 16px;
     }
 
     /* Unlock Card */
