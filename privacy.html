@@ -10,94 +10,180 @@
   <!-- End Google Tag Manager -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0a0a0a" />
   <title>Privacy — Braggy</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🎯%3C/text%3E%3C/svg%3E" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Geist:wght@400;500;600&family=Geist+Mono&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --cream: #F2EDE4;
-      --ink: #161413;
-      --orange: #E8541C;
-      --muted: #6B635C;
+      --bg: #0a0a0a;
+      --text: #f5f5f5;
+      --text-secondary: #c4c4c4;
+      --text-muted: #8e8e8e;
+      --accent: #ff6b35;
+      --accent-glow: rgba(255,107,53,0.25);
+      --border: rgba(255,255,255,0.08);
     }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
     body {
-      background: var(--cream);
-      color: var(--ink);
-      font-family: 'Geist', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', system-ui, sans-serif;
+      font-weight: 400;
       line-height: 1.65;
       -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      min-height: 100vh;
+      overflow-x: hidden;
     }
-    .container { max-width: 720px; margin: 0 auto; padding: 2rem 1.5rem 5rem; }
-    header { padding: 1rem 0 3rem; }
+
+    /* Animated gradient mesh background — matches index.html */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse 55% 50% at 50% 45%, rgba(255,107,53,0.09), transparent 65%),
+        radial-gradient(ellipse 70% 60% at 15% 35%, rgba(255,107,53,0.12), transparent 60%),
+        radial-gradient(ellipse 50% 50% at 85% 15%, rgba(255,107,53,0.08), transparent 55%),
+        radial-gradient(ellipse 60% 70% at 50% 85%, rgba(255,107,53,0.07), transparent 60%),
+        radial-gradient(ellipse 40% 40% at 70% 50%, rgba(200,80,30,0.05), transparent 50%);
+      animation: bgShift 20s ease-in-out infinite alternate;
+    }
+    @keyframes bgShift {
+      0% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(-2%, 1%) scale(1.02); }
+      100% { transform: translate(2%, -1%) scale(0.98); }
+    }
+
+    /* Noise texture overlay — matches index.html */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      opacity: 0.03;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 5rem;
+      position: relative;
+      z-index: 2;
+    }
+
+    header {
+      padding: 1rem 0 3rem;
+    }
     .logo {
-      font-family: 'Instrument Serif', serif;
-      font-size: 1.55rem;
-      letter-spacing: -0.02em;
       display: flex;
       align-items: center;
-      gap: 0.45rem;
+      gap: 0.6rem;
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: var(--text);
       text-decoration: none;
-      color: var(--ink);
     }
-    .logo-dot {
-      width: 9px; height: 9px;
-      background: var(--orange);
-      border-radius: 50%;
+    .logo-mark {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #ff6b35, #f97316);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 20px var(--accent-glow);
     }
+
     h1 {
-      font-family: 'Instrument Serif', serif;
-      font-weight: 400;
+      font-family: 'Playfair Display', serif;
+      font-weight: 600;
       font-size: clamp(2.2rem, 5vw, 3.2rem);
       line-height: 1.05;
       letter-spacing: -0.02em;
       margin-bottom: 0.7rem;
+      color: var(--text);
     }
     .subtitle {
-      font-family: 'Geist Mono', monospace;
+      font-family: 'JetBrains Mono', monospace;
       font-size: 0.78rem;
       letter-spacing: 0.15em;
       text-transform: uppercase;
-      color: var(--muted);
+      color: var(--text-muted);
       margin-bottom: 3rem;
     }
+
     h2 {
-      font-family: 'Instrument Serif', serif;
-      font-weight: 400;
+      font-family: 'Playfair Display', serif;
+      font-weight: 600;
       font-size: 1.6rem;
       letter-spacing: -0.01em;
       margin: 2.5rem 0 1rem;
       display: flex;
       align-items: center;
       gap: 0.6rem;
+      color: var(--text);
     }
     h2::before {
       content: '';
-      width: 24px; height: 2px;
-      background: var(--orange);
+      width: 24px;
+      height: 2px;
+      background: var(--accent);
+      border-radius: 2px;
     }
-    p { margin-bottom: 1rem; font-size: 1.02rem; }
+
+    p {
+      margin-bottom: 1rem;
+      font-size: 1.02rem;
+      color: var(--text-secondary);
+    }
+    p strong { color: var(--text); font-weight: 600; }
+
     ul { margin: 0.5rem 0 1rem 1.4rem; }
-    ul li { margin-bottom: 0.5rem; }
-    a { color: var(--orange); text-decoration: underline; text-underline-offset: 3px; }
+    ul li {
+      margin-bottom: 0.5rem;
+      color: var(--text-secondary);
+    }
+    ul li strong { color: var(--text); font-weight: 600; }
+
+    a {
+      color: var(--accent);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      transition: opacity 0.2s;
+    }
+    a:hover { opacity: 0.8; }
+
     .back {
-      font-family: 'Geist Mono', monospace;
+      font-family: 'JetBrains Mono', monospace;
       font-size: 0.82rem;
-      color: var(--muted);
+      color: var(--text-muted);
       text-decoration: none;
       display: inline-block;
       margin-bottom: 1.5rem;
+      transition: color 0.2s;
     }
-    .back:hover { color: var(--orange); }
+    .back:hover { color: var(--accent); }
+
     .last-updated {
-      font-family: 'Geist Mono', monospace;
+      font-family: 'JetBrains Mono', monospace;
       font-size: 0.78rem;
-      color: var(--muted);
+      color: var(--text-muted);
       margin-top: 4rem;
       padding-top: 2rem;
-      border-top: 1px solid rgba(22, 20, 19, 0.1);
+      border-top: 1px solid var(--border);
     }
   </style>
 </head>
@@ -109,7 +195,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <div class="container">
     <header>
       <a href="/" class="logo">
-        <span class="logo-dot"></span>
         <span>Braggy</span>
       </a>
     </header>
@@ -134,23 +219,34 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <ul>
       <li>We don't sell your email. Ever.</li>
       <li>We don't share your résumé with recruiters, employers, or anyone else.</li>
-      <li>We don't run ads or share data with ad networks.</li>
       <li>We don't use your résumé to train any AI model of our own.</li>
+      <li>We don't run retargeting or behavioural ads against you. (We do run Google Ads to acquire new users — see the conversion tracking note in "Where your data lives" — but that's measurement, not retargeting.)</li>
     </ul>
 
     <h2>How to delete your data</h2>
     <p>Email us at the contact address (coming soon — for now, the project is run by a single person, and you can reach out via the WhatsApp / social channel where you found Braggy). We'll delete your record within 7 days.</p>
 
     <h2>Where your data lives</h2>
-    <p>Email records are stored in Supabase (Mumbai region). The website itself is hosted on Vercel. We use Anthropic's Claude API for the analysis. That's the entire stack — no third-party trackers, no analytics yet.</p>
+    <p>Email records are stored in Supabase (Mumbai region). The website itself is hosted on Vercel. The résumé analysis is done by Anthropic's Claude API.</p>
+    <p>To keep the site running and to learn which ads actually bring useful visitors, we also use:</p>
+    <ul>
+      <li><strong>Google Tag Manager and Google Ads conversion tracking</strong> — when you submit your résumé or your email, an event fires so we can see which ad brought you. Google receives the signal that a conversion happened; it does not receive your résumé text or your email.</li>
+      <li><strong>A self-hosted analytics script</strong> (running on our own Vercel instance, no third-party data sharing) — for basic page-view stats.</li>
+      <li><strong>Cloudflare Turnstile</strong> — invisible bot protection on the résumé submission form, so our analysis API doesn't get spammed.</li>
+    </ul>
 
     <h2>Cookies</h2>
-    <p>None right now. If we add basic analytics later, we'll update this page first.</p>
+    <p>A small number, all functional or measurement-related:</p>
+    <ul>
+      <li>Google Tag Manager and Google Ads conversion tracking set cookies so we can attribute submissions back to the ad campaign that brought you.</li>
+      <li>Cloudflare Turnstile sets a short-lived cookie to confirm you're a real person when you submit a résumé.</li>
+    </ul>
+    <p>We do not use cookies for retargeting ads, behavioural advertising, or sharing your activity with any third party beyond what's listed in "Where your data lives" above.</p>
 
     <h2>Changes to this policy</h2>
     <p>If something material changes, we'll update this page and note the date below. Since this is a pre-launch product, expect this page to evolve as Braggy grows.</p>
 
-    <div class="last-updated">Last updated: 6 May 2026</div>
+    <div class="last-updated">Last updated: 18 May 2026</div>
   </div>
 </body>
 </html>
