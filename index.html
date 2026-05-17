@@ -1261,21 +1261,35 @@
       border-radius: 16px;
       padding: 1.5rem 1.75rem;
       margin-bottom: 2rem;
+      position: relative;
+      overflow: hidden;
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+    }
+    .market-reality-full::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 3px;
+      height: 100%;
+      background: linear-gradient(180deg, var(--gradient-start), var(--gradient-end));
     }
     .market-reality-label {
       font-family: 'JetBrains Mono', monospace;
       font-size: 0.68rem;
       letter-spacing: 0.14em;
       text-transform: uppercase;
-      color: var(--text-muted);
+      color: var(--accent);
       margin-bottom: 0.65rem;
       font-weight: 500;
     }
     .market-reality-full p {
-      font-size: 1rem;
-      line-height: 1.65;
-      color: var(--text-secondary);
+      font-family: 'Inter', sans-serif;
+      font-weight: 400;
+      font-size: clamp(1rem, 2vw, 1.15rem);
+      line-height: 1.7;
+      color: rgba(242, 237, 228, 0.92);
+      letter-spacing: 0.01em;
     }
 
     /* Big Fix */
