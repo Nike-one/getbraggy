@@ -1257,6 +1257,33 @@
       flex: 0 0 auto;
       white-space: nowrap;
     }
+    .unlock-tease-list {
+      list-style: none;
+      margin: 0 0 1.4rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      position: relative;
+      z-index: 2;
+    }
+    .unlock-tease-list li {
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+      line-height: 1.45;
+    }
+    .unlock-trust {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      margin-top: 0.9rem;
+      position: relative;
+      z-index: 2;
+    }
+    .unlock-trust span {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
     .unlock-error {
       display: none;
       margin-top: 0.85rem;
@@ -2169,16 +2196,22 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         <div class="market-partial" id="market-partial"></div>
 
-        <h3 class="section-title">A taste of your rewrites</h3>
+        <h3 class="section-title">One rewrite, on the house</h3>
         <div class="rewrite-list rewrite-list-blurred" id="rewrite-list-preview"></div>
 
         <div class="unlock-card" id="unlock-card">
-          <div class="unlock-eyebrow">More inside · locked</div>
-          <h3 class="unlock-head" id="unlock-head">Unlock full market reality, <span id="unlock-rest-count">2</span> more rewrites, salary positioning, and recruiter verdict.</h3>
-          <p class="unlock-sub">Drop your email. One unlock per email. We'll never spam.</p>
+          <div class="unlock-eyebrow">Your full analysis · ready</div>
+          <h3 class="unlock-head" id="unlock-head">Get the complete breakdown sent to you.</h3>
+          <ul class="unlock-tease-list" id="unlock-tease-list"></ul>
           <div class="unlock-row">
-            <input type="email" id="unlock-email" placeholder="your@email.com" autocomplete="email" aria-label="Email address to unlock" />
-            <button class="brag-btn" id="unlock-btn" onclick="unlockFullAnalysis()">Unlock →</button>
+            <input type="email" id="unlock-email" placeholder="your@email.com"
+                   autocomplete="email" inputmode="email" autocapitalize="off"
+                   aria-label="Email address to unlock" />
+            <button class="brag-btn" id="unlock-btn" onclick="unlockFullAnalysis()">Send my full analysis →</button>
+          </div>
+          <div class="unlock-trust">
+            <span>📩 One email. One delivery. No newsletters.</span>
+            <span>🔒 Your résumé is never stored. We never sell email lists.</span>
           </div>
           <div class="unlock-error" id="unlock-error"></div>
         </div>
@@ -2543,12 +2576,30 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       }
 
       const restCount = Math.max(0, rewrites.length - 1);
-      const unlockHead = document.getElementById('unlock-head');
-      if (restCount === 0) {
-        unlockHead.textContent = 'Unlock full market reality, salary positioning, and recruiter verdict.';
+
+      const teaseList = document.getElementById('unlock-tease-list');
+      teaseList.innerHTML = '';
+      const teases = [];
+
+      const role = (data.profile_chips || []).find(c => /engineer|product|manager|designer|analyst|consultant|developer|marketer|finance|operations/i.test(c)) || 'your profile';
+      teases.push(`📊 Your market reality — full salary range analysis for ${role} in India`);
+      if (restCount > 0) teases.push(`✏️ ${restCount} more weak bullet${restCount > 1 ? 's' : ''}, rewritten with concrete numbers`);
+      teases.push('💰 Salary positioning: what range your résumé signals vs what your experience actually justifies');
+      const gaps = data.skill_gaps || [];
+      if (gaps.length > 0) {
+        const names = gaps.slice(0, 2).map(g => g.skill).join(', ');
+        teases.push(`🎯 ${names}${gaps.length > 2 ? ` + ${gaps.length - 2} more` : ''} — skills missing from your résumé that are worth more salary`);
       } else {
-        unlockHead.innerHTML = `Unlock full market reality, <span id="unlock-rest-count">${restCount}</span> more rewrites, salary positioning, and recruiter verdict.`;
+        teases.push('🎯 High-value skills missing from your résumé that recruiters are paying a premium for');
       }
+      teases.push('🔧 The #1 thing to fix in your résumé today');
+      teases.push('⚡ Recruiter verdict: what actually happens to this résumé in a real hiring pipeline');
+
+      teases.forEach(t => {
+        const li = document.createElement('li');
+        li.textContent = t;
+        teaseList.appendChild(li);
+      });
 
       document.getElementById('unlock-card').style.display = '';
       document.getElementById('locked-section').classList.remove('reveal');
