@@ -2125,7 +2125,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <span class="sep">·</span>
           <span><span class="sn">2.</span> Get score, red flags & recruiter reaction free</span>
           <span class="sep">·</span>
-          <span><span class="sn">3.</span> Unlock full analysis with your email</span>
+          <span><span class="sn">3.</span> Get your rewritten résumé in your inbox</span>
           <a href="#sample-section" class="see-example">↑ See an example</a>
         </div>
         <label class="form-label" for="resume-file">
@@ -2200,14 +2200,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="rewrite-list rewrite-list-blurred" id="rewrite-list-preview"></div>
 
         <div class="unlock-card" id="unlock-card">
-          <div class="unlock-eyebrow">Your full analysis · ready</div>
-          <h3 class="unlock-head" id="unlock-head">Get the complete breakdown sent to you.</h3>
+          <div class="unlock-eyebrow">Your rewritten résumé · ready</div>
+          <h3 class="unlock-head" id="unlock-head">Get your rewritten résumé sent to your inbox.</h3>
           <ul class="unlock-tease-list" id="unlock-tease-list"></ul>
           <div class="unlock-row">
             <input type="email" id="unlock-email" placeholder="your@email.com"
                    autocomplete="email" inputmode="email" autocapitalize="off"
                    aria-label="Email address to unlock" />
-            <button class="brag-btn" id="unlock-btn" onclick="unlockFullAnalysis()">Send my full analysis →</button>
+            <button class="brag-btn" id="unlock-btn" onclick="unlockFullAnalysis()">Send my rewritten résumé →</button>
           </div>
           <div class="unlock-trust">
             <span>📩 One email. One delivery. No newsletters.</span>
@@ -2217,17 +2217,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         </div>
 
         <div class="locked-section" id="locked-section">
-          <div class="market-reality-full">
-            <div class="market-reality-label">Your market reality</div>
-            <p id="market-reality-full-text"></p>
-          </div>
-
-          <h3 class="section-title">All your weak bullets, rewritten</h3>
+          <h3 class="section-title">Your rewritten résumé</h3>
           <div class="rewrite-list" id="rewrite-list-rest"></div>
 
           <div class="big-fix">
             <div class="big-fix-label">The #1 thing to fix today</div>
             <div class="big-fix-text" id="big-fix-text"></div>
+          </div>
+
+          <div class="market-reality-full">
+            <div class="market-reality-label">Your market reality</div>
+            <p id="market-reality-full-text"></p>
           </div>
 
           <div class="salary-positioning">
@@ -2297,7 +2297,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
     <details>
       <summary>Is Braggy really a free résumé review?</summary>
-      <p>Yes — completely free, no sign-up. Drop your résumé and you'll get a Brag Score, red flags, and a recruiter-style verdict in about 10 seconds. Full analysis unlocks with just an email.</p>
+      <p>Yes — completely free, no sign-up. Drop your résumé and you'll get a Brag Score, red flags, and a recruiter-style verdict in about 10 seconds. Drop your email and we'll send you the rewritten version of your résumé.</p>
     </details>
 
     <details>
@@ -2582,8 +2582,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       const teases = [];
 
       const role = (data.profile_chips || []).find(c => /engineer|product|manager|designer|analyst|consultant|developer|marketer|finance|operations/i.test(c)) || 'your profile';
+      const totalRewrites = rewrites.length;
+      if (totalRewrites > 1) {
+        teases.push(`✏️ Your résumé rewritten — all ${totalRewrites} weak bullets replaced with concrete, recruiter-ready language`);
+      } else if (totalRewrites === 1) {
+        teases.push(`✏️ Your résumé rewritten — every weak bullet replaced with concrete, recruiter-ready language`);
+      } else {
+        teases.push(`✏️ Your résumé rewritten — weak bullets replaced with concrete, recruiter-ready language`);
+      }
+      teases.push('🔧 The #1 thing to fix in your résumé today');
       teases.push(`📊 Your market reality — full salary range analysis for ${role} in India`);
-      if (restCount > 0) teases.push(`✏️ ${restCount} more weak bullet${restCount > 1 ? 's' : ''}, rewritten with concrete numbers`);
       teases.push('💰 Salary positioning: what range your résumé signals vs what your experience actually justifies');
       const gaps = data.skill_gaps || [];
       if (gaps.length > 0) {
@@ -2592,7 +2600,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       } else {
         teases.push('🎯 High-value skills missing from your résumé that recruiters are paying a premium for');
       }
-      teases.push('🔧 The #1 thing to fix in your résumé today');
       teases.push('⚡ Recruiter verdict: what actually happens to this résumé in a real hiring pipeline');
 
       teases.forEach(t => {
