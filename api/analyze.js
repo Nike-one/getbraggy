@@ -60,6 +60,16 @@ Your job:
 11. RECRUITER VERDICT: One honest closing paragraph. What happens to this résumé in a real hiring pipeline. What needs to change to break into the next tier. No motivation. No generic praise.
 No skill suggestions — focus on presentation and positioning changes only.
 
+12. REWRITTEN_RESUME: Extract the user's résumé into the fixed slots below. This will be rendered into a downloadable PDF the user sends to recruiters — it must be usable as-is.
+
+    HARD RULES:
+    - Preserve EXACTLY (never invent or change): name, email, phone, LinkedIn URL, GitHub URL, institution names, degree names, dates, GPAs/percentages, certification names, company names, role titles, project names, club/organization names.
+    - Rewrite EVERY bullet to lead with an action verb, include concrete numbers, state an outcome. Use the same [estimate] convention as the rewrites field — invent plausible numbers and tag with [estimate]. Keep each bullet under 25 words.
+    - If the user has a thin/empty role description ("internship will provide me experience"), infer 2-3 plausible bullets within the role's actual scope and tag numbers with [estimate]. Do NOT invent jobs, companies, or projects that aren't on the original résumé.
+    - For Skills, regroup the user's skills into Jake's-Resume-style categories: Languages, Frameworks, Developer Tools, Libraries, Databases, Cloud. Use only categories that apply. Keep the user's actual skills — don't add new ones.
+    - Use plain ASCII throughout this object. Use "Resume" not "Résumé". No ₹ symbol (the résumé doesn't need it). No em-dashes (use hyphens).
+    - Each slot is OPTIONAL — leave as an empty array if the user has no data for it. Do not invent a section just to fill it.
+
 Return strictly this JSON and nothing else:
 
 {
@@ -78,7 +88,62 @@ Return strictly this JSON and nothing else:
   "skill_gaps": [
     {"skill": "...", "salary_lift": "..."}
   ],
-  "recruiter_verdict": "<paragraph>"
+  "recruiter_verdict": "<paragraph>",
+  "rewritten_resume": {
+    "name": "<full name exactly as written>",
+    "contact": {
+      "email": "<email or empty string>",
+      "phone": "<phone or empty string>",
+      "linkedin": "<linkedin URL/handle or empty string>",
+      "github": "<github URL/handle or empty string>",
+      "location": "<city, country if present, else empty>"
+    },
+    "summary": "<empty string OR a 1-2 line professional summary IF the original résumé had one — never invent one>",
+    "education": [
+      {
+        "institution": "<school name>",
+        "location": "<city, state/country or empty>",
+        "degree": "<degree + field, e.g. 'Bachelors in Computer Science and Engineering'>",
+        "dates": "<e.g. 'Nov 2020 - Jun 2024'>",
+        "details": "<GPA, percentage, honors, relevant coursework — one short line, or empty>"
+      }
+    ],
+    "skills": [
+      {"category": "<e.g. Languages>", "items": "<comma-separated skills>"}
+    ],
+    "projects": [
+      {
+        "name": "<project name>",
+        "tech": "<tech stack one-line or empty>",
+        "link": "<github/demo URL or empty>",
+        "bullets": ["<rewritten bullet>", "<rewritten bullet>"]
+      }
+    ],
+    "experience": [
+      {
+        "role": "<job title>",
+        "company": "<company name>",
+        "location": "<city or empty>",
+        "dates": "<e.g. 'Sep 2022 - Nov 2022'>",
+        "bullets": ["<rewritten bullet>", "<rewritten bullet>"]
+      }
+    ],
+    "certifications": [
+      {"name": "<cert name>", "issuer": "<issuer or empty>", "date": "<year or empty>"}
+    ],
+    "extracurricular": [
+      {
+        "role": "<position title>",
+        "organization": "<club/org name>",
+        "dates": "<dates or empty>",
+        "bullets": ["<rewritten bullet>"]
+      }
+    ],
+    "awards": [
+      {"name": "<award name>", "issuer": "<or empty>", "date": "<or empty>"}
+    ],
+    "interests": ["<interest>", "<interest>"]
+  }
 }
 
 Rules:
@@ -292,7 +357,7 @@ export default async function handler(req) {
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 4000,
+        max_tokens: 6000,
         stream: true,
         system: SYSTEM_PROMPT,
         messages: [
