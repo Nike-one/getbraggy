@@ -1305,6 +1305,83 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
+    /* Download card — hero asset after unlock */
+    .download-card {
+      background: linear-gradient(135deg, rgba(255,107,53,0.13) 0%, rgba(255,107,53,0.04) 100%);
+      border: 1px solid rgba(255,107,53,0.32);
+      border-radius: 20px;
+      padding: 1.75rem 1.65rem;
+      margin-bottom: 2rem;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 8px 32px rgba(255,107,53,0.08), inset 0 1px 0 rgba(255,255,255,0.06);
+    }
+    .download-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    }
+    .download-card-eyebrow {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.68rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.6rem;
+      font-weight: 500;
+    }
+    .download-card-head {
+      font-family: 'Playfair Display', serif;
+      font-weight: 600;
+      font-size: clamp(1.4rem, 3vw, 1.75rem);
+      line-height: 1.2;
+      color: var(--text);
+      margin-bottom: 0.6rem;
+      letter-spacing: -0.01em;
+    }
+    .download-card-sub {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.95rem;
+      line-height: 1.55;
+      color: var(--text-secondary);
+      margin-bottom: 1.25rem;
+    }
+    .download-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.55rem;
+      padding: 0.85rem 1.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      border-radius: 10px;
+    }
+    .download-btn-icon {
+      font-size: 1.1rem;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      transform: translateY(1px);
+    }
+    .download-btn:disabled {
+      opacity: 0.6;
+      cursor: wait;
+    }
+    .download-card-meta {
+      margin-top: 0.85rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      min-height: 1em;
+    }
+    .download-card-meta.success { color: var(--accent); }
+
     /* Market Reality Full */
     .market-reality-full {
       background: rgba(255,255,255,0.03);
@@ -1963,6 +2040,7 @@
     ]
   }
   </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
 </head>
 <body>
 <!-- Google Tag Manager (noscript) -->
@@ -2125,7 +2203,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <span class="sep">·</span>
           <span><span class="sn">2.</span> Get score, red flags & recruiter reaction free</span>
           <span class="sep">·</span>
-          <span><span class="sn">3.</span> Get your rewritten résumé in your inbox</span>
+          <span><span class="sn">3.</span> Download your rewritten résumé as a PDF</span>
           <a href="#sample-section" class="see-example">↑ See an example</a>
         </div>
         <label class="form-label" for="resume-file">
@@ -2200,23 +2278,34 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="rewrite-list rewrite-list-blurred" id="rewrite-list-preview"></div>
 
         <div class="unlock-card" id="unlock-card">
-          <div class="unlock-eyebrow">Your rewritten résumé · ready</div>
-          <h3 class="unlock-head" id="unlock-head">Get your rewritten résumé sent to your inbox.</h3>
+          <div class="unlock-eyebrow">Your rewritten résumé · ready to download</div>
+          <h3 class="unlock-head" id="unlock-head">Download your rewritten résumé as a PDF.</h3>
           <ul class="unlock-tease-list" id="unlock-tease-list"></ul>
           <div class="unlock-row">
             <input type="email" id="unlock-email" placeholder="your@email.com"
                    autocomplete="email" inputmode="email" autocapitalize="off"
                    aria-label="Email address to unlock" />
-            <button class="brag-btn" id="unlock-btn" onclick="unlockFullAnalysis()">Send my rewritten résumé →</button>
+            <button class="brag-btn" id="unlock-btn" onclick="unlockFullAnalysis()">Unlock & download →</button>
           </div>
           <div class="unlock-trust">
-            <span>📩 One email. One delivery. No newsletters.</span>
+            <span>📩 One email. Instant PDF. No newsletters.</span>
             <span>🔒 Your résumé is never stored. We never sell email lists.</span>
           </div>
           <div class="unlock-error" id="unlock-error"></div>
         </div>
 
         <div class="locked-section" id="locked-section">
+          <div class="download-card" id="download-card">
+            <div class="download-card-eyebrow">Your rewritten résumé</div>
+            <div class="download-card-head">Ready to download.</div>
+            <div class="download-card-sub">PDF with all your bullets rewritten, the #1 fix, salary positioning, and the recruiter verdict — formatted for printing or attaching.</div>
+            <button class="brag-btn download-btn" id="download-btn" onclick="downloadRewrittenResume()">
+              <span class="download-btn-icon">↓</span>
+              <span class="download-btn-label">Download PDF</span>
+            </button>
+            <div class="download-card-meta" id="download-card-meta"></div>
+          </div>
+
           <h3 class="section-title">Your rewritten résumé</h3>
           <div class="rewrite-list" id="rewrite-list-rest"></div>
 
@@ -2297,7 +2386,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
     <details>
       <summary>Is Braggy really a free résumé review?</summary>
-      <p>Yes — completely free, no sign-up. Drop your résumé and you'll get a Brag Score, red flags, and a recruiter-style verdict in about 10 seconds. Drop your email and we'll send you the rewritten version of your résumé.</p>
+      <p>Yes — completely free, no sign-up. Drop your résumé and you'll get a Brag Score, red flags, and a recruiter-style verdict in about 10 seconds. Drop your email to download your rewritten résumé as a PDF.</p>
     </details>
 
     <details>
@@ -2617,6 +2706,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       document.getElementById('big-fix-text').textContent = '';
       document.getElementById('salary-positioning-text').textContent = '';
       document.getElementById('recruiter-verdict-text').textContent = '';
+      const dlMeta = document.getElementById('download-card-meta');
+      if (dlMeta) { dlMeta.textContent = ''; dlMeta.classList.remove('success'); }
+      const dlBtn = document.getElementById('download-btn');
+      if (dlBtn) {
+        dlBtn.disabled = false;
+        const dlLabel = dlBtn.querySelector('.download-btn-label');
+        if (dlLabel) dlLabel.textContent = 'Download PDF';
+      }
 
       document.getElementById('results-state').classList.add('show');
       window.dataLayer = window.dataLayer || [];
@@ -2675,14 +2772,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         if (res.status === 429) {
           showUnlockError(data.error || 'This email has already unlocked an analysis. Try another.');
           btn.disabled = false;
-          btn.textContent = 'Unlock →';
+          btn.textContent = 'Unlock & download →';
           return;
         }
 
         if (!res.ok) {
           showUnlockError(data.error || 'Something went wrong. Try again.');
           btn.disabled = false;
-          btn.textContent = 'Unlock →';
+          btn.textContent = 'Unlock & download →';
           return;
         }
 
@@ -2693,7 +2790,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       } catch (e) {
         showUnlockError('Network error. Check your connection and try again.');
         btn.disabled = false;
-        btn.textContent = 'Unlock →';
+        btn.textContent = 'Unlock & download →';
       }
     }
 
@@ -2742,6 +2839,196 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         setTimeout(() => {
           window.scrollTo({ top: target.offsetTop - 40, behavior: 'smooth' });
         }, 80);
+      }
+    }
+
+    function downloadRewrittenResume() {
+      if (!analysisData) return;
+      const btn = document.getElementById('download-btn');
+      const meta = document.getElementById('download-card-meta');
+      if (!window.jspdf || !window.jspdf.jsPDF) {
+        meta.classList.remove('success');
+        meta.textContent = 'PDF library still loading — try again in a moment.';
+        return;
+      }
+
+      btn.disabled = true;
+      const label = btn.querySelector('.download-btn-label');
+      const prev = label.textContent;
+      label.textContent = 'Preparing PDF…';
+
+      try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+
+        const PAGE_W = 210;
+        const PAGE_H = 297;
+        const MARGIN_X = 18;
+        const CONTENT_W = PAGE_W - (MARGIN_X * 2);
+        const COLOR_ACCENT = [255, 107, 53];
+        const COLOR_TEXT = [28, 28, 28];
+        const COLOR_MUTED = [110, 110, 110];
+        const COLOR_RULE = [225, 225, 225];
+
+        let y = 22;
+
+        function footer() {
+          doc.setFontSize(8);
+          doc.setTextColor(...COLOR_MUTED);
+          doc.setFont('helvetica', 'normal');
+          doc.text('Generated by Braggy · getbraggy.in', PAGE_W / 2, PAGE_H - 10, { align: 'center' });
+        }
+        function ensureSpace(needed) {
+          if (y + needed > PAGE_H - 18) {
+            footer();
+            doc.addPage();
+            y = 22;
+          }
+        }
+        function sectionHeader(text) {
+          ensureSpace(14);
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(13);
+          doc.setTextColor(...COLOR_TEXT);
+          doc.text(text, MARGIN_X, y);
+          y += 2;
+          doc.setDrawColor(...COLOR_RULE);
+          doc.setLineWidth(0.3);
+          doc.line(MARGIN_X, y + 1.5, PAGE_W - MARGIN_X, y + 1.5);
+          y += 6;
+        }
+        function paragraph(text) {
+          if (!text) return;
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(10.5);
+          doc.setTextColor(...COLOR_TEXT);
+          const lines = doc.splitTextToSize(String(text), CONTENT_W);
+          ensureSpace(lines.length * 5 + 4);
+          doc.text(lines, MARGIN_X, y);
+          y += lines.length * 5 + 6;
+        }
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(22);
+        doc.setTextColor(...COLOR_TEXT);
+        doc.text('Your Rewritten Résumé', MARGIN_X, y);
+        y += 8;
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
+        doc.setTextColor(...COLOR_ACCENT);
+        const score = analysisData.score || 0;
+        const chips = (analysisData.profile_chips || []).join(' · ');
+        const headerMeta = `BRAG SCORE ${score}/100${chips ? '   ·   ' + chips : ''}`;
+        doc.text(headerMeta, MARGIN_X, y);
+        y += 5;
+
+        doc.setDrawColor(...COLOR_ACCENT);
+        doc.setLineWidth(0.6);
+        doc.line(MARGIN_X, y + 1, MARGIN_X + 40, y + 1);
+        y += 10;
+
+        const rewrites = analysisData.rewrites || [];
+        if (rewrites.length > 0) {
+          sectionHeader('The rewrites');
+          doc.setFont('helvetica', 'italic');
+          doc.setFontSize(9.5);
+          doc.setTextColor(...COLOR_MUTED);
+          const intro = doc.splitTextToSize('Replace your weak bullets with these. [estimate] tags are placeholder numbers — swap with your real ones before sending.', CONTENT_W);
+          ensureSpace(intro.length * 4.5 + 4);
+          doc.text(intro, MARGIN_X, y);
+          y += intro.length * 4.5 + 5;
+
+          rewrites.forEach((r, i) => {
+            const beforeLines = doc.splitTextToSize(r.before || '', CONTENT_W - 12);
+            const afterLines = doc.splitTextToSize(r.after || '', CONTENT_W - 12);
+            const blockH = (beforeLines.length + afterLines.length) * 5 + 22;
+            ensureSpace(blockH);
+
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(10);
+            doc.setTextColor(...COLOR_ACCENT);
+            doc.text(`#${i + 1}`, MARGIN_X, y);
+
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(8.5);
+            doc.setTextColor(...COLOR_MUTED);
+            doc.text('BEFORE', MARGIN_X + 10, y);
+            y += 4.5;
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(10.5);
+            doc.setTextColor(...COLOR_TEXT);
+            doc.text(beforeLines, MARGIN_X + 10, y);
+            y += beforeLines.length * 5 + 3;
+
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(8.5);
+            doc.setTextColor(...COLOR_ACCENT);
+            doc.text('AFTER', MARGIN_X + 10, y);
+            y += 4.5;
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(10.5);
+            doc.setTextColor(...COLOR_TEXT);
+            doc.text(afterLines, MARGIN_X + 10, y);
+            y += afterLines.length * 5 + 9;
+          });
+        }
+
+        if (analysisData.one_big_fix) {
+          sectionHeader('The #1 thing to fix today');
+          paragraph(analysisData.one_big_fix);
+        }
+        if (analysisData.salary_positioning) {
+          sectionHeader('Salary positioning');
+          paragraph(analysisData.salary_positioning);
+        }
+        if (analysisData.market_reality_full) {
+          sectionHeader('Your market reality');
+          paragraph(analysisData.market_reality_full);
+        }
+
+        const gaps = analysisData.skill_gaps || [];
+        if (gaps.length > 0) {
+          sectionHeader('Skills worth adding for salary');
+          gaps.forEach((s, i) => {
+            ensureSpace(7);
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(10.5);
+            doc.setTextColor(...COLOR_TEXT);
+            doc.text(`${i + 1}.  ${s.skill || ''}`, MARGIN_X, y);
+            if (s.salary_lift) {
+              doc.setFont('helvetica', 'bold');
+              doc.setTextColor(...COLOR_ACCENT);
+              doc.text(`+${s.salary_lift}`, PAGE_W - MARGIN_X, y, { align: 'right' });
+            }
+            y += 5.5;
+          });
+          y += 4;
+        }
+
+        if (analysisData.recruiter_verdict) {
+          sectionHeader('Recruiter verdict');
+          paragraph(analysisData.recruiter_verdict);
+        }
+
+        footer();
+
+        const dateStr = new Date().toISOString().slice(0, 10);
+        doc.save(`braggy-rewritten-resume-${dateStr}.pdf`);
+
+        meta.classList.add('success');
+        meta.textContent = '✓ Downloaded. Check your downloads folder.';
+        label.textContent = 'Download again';
+        btn.disabled = false;
+
+        window.dataLayer = window.dataLayer || [];
+        dataLayer.push({ event: 'resume_downloaded', score: analysisData.score || 0 });
+      } catch (e) {
+        console.error('pdf generation failed', e);
+        meta.classList.remove('success');
+        meta.textContent = 'Could not generate PDF. Refresh the page and try again.';
+        label.textContent = prev;
+        btn.disabled = false;
       }
     }
 
