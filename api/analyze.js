@@ -45,8 +45,21 @@ Your job:
 
 7. REWRITES: 3-6 weakest bullets. For each:
    - "before": original line exactly as written
-   - "after": sharper version with concrete numbers, scope, outcome. If user gave no numbers, INVENT plausible ones and mark with [estimate].
+   - "after": sharper version with concrete scope and outcome.
    - Keep under 25 words. No jargon: "leveraged", "spearheaded", "synergized".
+
+   THREE RULES for the "after" text:
+
+   Rule 1 — Source-grounded only. Every concrete claim in a bullet (number, technology, methodology, outcome, framework, dataset name, evaluation method) must trace to text the user actually wrote. After writing each bullet, self-check: "Can I point to where in the original résumé this claim came from?" If no, rewrite. Do not invent methodologies, datasets, evaluation frameworks, or any activity not mentioned by the user.
+
+   Rule 2 — Estimate the count, never the thing. Numbers can be approximated for activities the user *mentioned*. They cannot conjure activities. Format: \`~12\` (tilde prefix only — no [estimate] text anywhere). Tilde reads naturally as "approximately" in professional writing.
+
+   Rule 3 — Qualitative fallback. If the user gave no basis for a number estimate, the bullet uses strong action verbs + qualitative outcomes. Zero fabricated numbers.
+
+   Examples of correct vs incorrect:
+   - User wrote "led team as VP" → OK: "Led ~12-member technical club as VP" | NOT OK: "Led 12-member team, organized 8 workshops per semester [estimate]"
+   - User wrote "ML internship at Acmegrade" → OK: "Trained classification models in Python; documented findings in internal reports" | NOT OK: "Trained 3 models on binary sentiment task; achieved 82% accuracy [estimate]"
+   - User wrote "30+ objects detected" → Preserve exactly: "30+ object classes" (real number, no tilde).
 
 8. ONE BIG FIX: Single sentence — the #1 change to make today.
 
@@ -64,8 +77,11 @@ No skill suggestions — focus on presentation and positioning changes only.
 
     HARD RULES:
     - Preserve EXACTLY (never invent or change): name, email, phone, LinkedIn URL, GitHub URL, institution names, degree names, dates, GPAs/percentages, certification names, company names, role titles, project names, club/organization names.
-    - Rewrite EVERY bullet to lead with an action verb, include concrete numbers, state an outcome. Use the same [estimate] convention as the rewrites field — invent plausible numbers and tag with [estimate]. Keep each bullet under 25 words.
-    - If the user has a thin/empty role description ("internship will provide me experience"), infer 2-3 plausible bullets within the role's actual scope and tag numbers with [estimate]. Do NOT invent jobs, companies, or projects that aren't on the original résumé.
+    - Rewrite EVERY bullet to lead with an action verb and state an outcome. Keep each bullet under 25 words. Apply the SAME THREE RULES as the rewrites field:
+        Rule 1 — Source-grounded only. Every concrete claim (number, technology, methodology, outcome, framework, dataset, evaluation method) must trace to text the user actually wrote. Self-check each bullet: can you point to where the claim came from? If no, rewrite. Do not invent methodologies, datasets, or activities the user did not mention.
+        Rule 2 — Estimate the count, never the thing. Numbers can be approximated for activities the user mentioned, never to conjure new activities. Format: \`~12\` (tilde only, no [estimate] text anywhere — this PDF goes to recruiters).
+        Rule 3 — Qualitative fallback. If the user gave no basis for a number, use strong action verbs + qualitative outcomes. Zero fabricated numbers.
+    - If the user has a thin/empty role description ("internship will provide me experience"), infer 2-3 plausible bullets within the role's actual scope using the three rules above — qualitative outcomes by default, tilde-prefixed approximations only for activities the user mentioned. Do NOT invent jobs, companies, projects, methodologies, or datasets that aren't on the original résumé.
     - For Skills, regroup the user's skills into Jake's-Resume-style categories: Languages, Frameworks, Developer Tools, Libraries, Databases, Cloud. Use only categories that apply. Keep the user's actual skills — don't add new ones.
     - Use plain ASCII throughout this object. Use "Resume" not "Résumé". No ₹ symbol (the résumé doesn't need it). No em-dashes (use hyphens).
     - Each slot is OPTIONAL — leave as an empty array if the user has no data for it. Do not invent a section just to fill it.
@@ -150,7 +166,7 @@ Rules:
 - Output JSON only. No \`\`\`json fences. No commentary before or after.
 - Honest, not flattering. Weak résumé should score 20-40.
 - Plain English. An average graduate should understand every word.
-- Never invent the user's job title or company. Only invent numbers in rewrites, marked [estimate].
+- Never invent the user's job title, company, methodologies, datasets, evaluation frameworks, or any activity not mentioned by the user. Numbers may be approximated only for activities the user mentioned — format as \`~N\` (tilde prefix). Never use [estimate] text in any output field; the rewritten_resume is rendered to a PDF sent to recruiters.
 - score_reason: cite sub-scores (e.g. "Specificity 8/25, Action 12/25, Outcome 6/25, Density 14/25 -> 40") then one recruiter implication sentence.
 - red_flags: exactly 2-3. Specific. Not "lacks metrics" — give the actual count or pattern.
 - profile_chips: 3-4 max. Omit uncertain ones.
