@@ -708,14 +708,331 @@
       window.dataLayer = window.dataLayer || [];
       dataLayer.push({ event: 'editor_fix_all', resolved_count: Object.values(resolved).filter(v => !v.skipped).length });
     }
-    function onDownloadClick() {}
-    function submitEmail() {}
+    function onDownloadClick() {
+      if (!analysisData?.rewritten_resume) return;
+      let email = '';
+      try { email = localStorage.getItem('braggy_email') || ''; } catch (e) {}
+      const emailValid = email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+      if (emailValid) {
+        generateAndDownloadPDF();
+        return;
+      }
+      openEmailModal();
+    }
+
+    function openEmailModal() {
+      const modal = document.getElementById('email-modal');
+      modal.classList.add('show');
+      document.getElementById('modal-error').classList.remove('show');
+      const input = document.getElementById('modal-email');
+      input.value = '';
+      setTimeout(() => input.focus(), 50);
+    }
+
+    function closeEmailModal() {
+      document.getElementById('email-modal').classList.remove('show');
+    }
+
+    function showModalError(msg) {
+      const err = document.getElementById('modal-error');
+      err.textContent = msg;
+      err.classList.add('show');
+    }
+
+    async function submitEmail() {
+      const input = document.getElementById('modal-email');
+      const btn = document.getElementById('modal-submit');
+      const email = input.value.trim();
+
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        showModalError('Please enter a valid email address.');
+        return;
+      }
+
+      btn.disabled = true;
+      const prevLabel = btn.textContent;
+      btn.textContent = 'Sending…';
+      document.getElementById('modal-error').classList.remove('show');
+
+      try {
+        const res = await fetch('/api/unlock', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email,
+            fingerprint: '',
+            ...(DEV_KEY && { dev_key: DEV_KEY }),
+          }),
+        });
+        let data = {};
+        try { data = await res.json(); } catch (_) {}
+
+        if (!res.ok || !data.ok) {
+          showModalError(data.error || 'Something went wrong. Try again.');
+          btn.disabled = false;
+          btn.textContent = prevLabel;
+          return;
+        }
+
+        try { localStorage.setItem('braggy_email', email); } catch (e) {}
+        closeEmailModal();
+        btn.disabled = false;
+        btn.textContent = prevLabel;
+
+        window.dataLayer = window.dataLayer || [];
+        dataLayer.push({ event: 'editor_email_submitted', already_unlocked: !!data.already_unlocked });
+
+        generateAndDownloadPDF();
+      } catch (e) {
+        showModalError('Network error. Check your connection and try again.');
+        btn.disabled = false;
+        btn.textContent = prevLabel;
+      }
+    }
+
+    function generateAndDownloadPDF() {
+      if (!analysisData?.rewritten_resume) return;
+      if (!window.jspdf || !window.jspdf.jsPDF) {
+        alert('PDF library still loading. Try again in a moment.');
+        return;
+      }
+      const r = analysisData.rewritten_resume;
+      if (!r.name) {
+        alert('Resume data missing — re-run the analysis on the home page.');
+        return;
+      }
+
+      const headerBtn = document.getElementById('header-download-btn');
+      headerBtn.disabled = true;
+      const prevLabel = headerBtn.textContent;
+      headerBtn.textContent = 'Preparing PDF…';
+
+      const clean = (text) => {
+        if (text === null || text === undefined) return '';
+        return String(text)
+          .replace(/₹/g, 'Rs ')
+          .replace(/['']/g, "'")
+          .replace(/[""]/g, '"')
+          .replace(/[–—]/g, '-')
+          .replace(/…/g, '...')
+          .replace(/·/g, '-')
+          .replace(/[éèêë]/g, 'e').replace(/[ÉÈÊË]/g, 'E')
+          .replace(/[áàâä]/g, 'a').replace(/[ÁÀÂÄ]/g, 'A')
+          .replace(/[íìîï]/g, 'i').replace(/[ÍÌÎÏ]/g, 'I')
+          .replace(/[óòôö]/g, 'o').replace(/[ÓÒÔÖ]/g, 'O')
+          .replace(/[úùûü]/g, 'u').replace(/[ÚÙÛÜ]/g, 'U')
+          .replace(/ñ/g, 'n').replace(/Ñ/g, 'N')
+          .replace(/ç/g, 'c').replace(/Ç/g, 'C')
+          .replace(/[^\x00-\xff]/g, '');
+      };
+
+      try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+
+        const PAGE_W = 210;
+        const PAGE_H = 297;
+        const MARGIN_X = 16;
+        const MARGIN_Y_TOP = 14;
+        const MARGIN_Y_BOTTOM = 14;
+        const CONTENT_W = PAGE_W - (MARGIN_X * 2);
+        const PAGE_CENTER = PAGE_W / 2;
+        const COLOR_TEXT = [0, 0, 0];
+        const COLOR_RULE = [0, 0, 0];
+        let y = MARGIN_Y_TOP;
+
+        function ensureSpace(needed) {
+          if (y + needed > PAGE_H - MARGIN_Y_BOTTOM) { doc.addPage(); y = MARGIN_Y_TOP; }
+        }
+        function sectionTitle(title) {
+          ensureSpace(10); y += 1.2;
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(11.5); doc.setTextColor(...COLOR_TEXT);
+          doc.text(clean(title).toUpperCase(), MARGIN_X, y);
+          doc.setDrawColor(...COLOR_RULE); doc.setLineWidth(0.4);
+          doc.line(MARGIN_X, y + 1.3, PAGE_W - MARGIN_X, y + 1.3);
+          y += 5.2;
+        }
+        function entryHeader(title, dateText) {
+          if (!title && !dateText) return;
+          ensureSpace(4.8);
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(10.5); doc.setTextColor(...COLOR_TEXT);
+          if (title) doc.text(clean(title), MARGIN_X, y);
+          if (dateText) { doc.setFont('helvetica', 'normal'); doc.text(clean(dateText), PAGE_W - MARGIN_X, y, { align: 'right' }); }
+          y += 4.3;
+        }
+        function entrySubheader(subtitle, location) {
+          if (!subtitle && !location) return;
+          ensureSpace(4.5);
+          doc.setFont('helvetica', 'italic'); doc.setFontSize(10); doc.setTextColor(...COLOR_TEXT);
+          if (subtitle) doc.text(clean(subtitle), MARGIN_X, y);
+          if (location) doc.text(clean(location), PAGE_W - MARGIN_X, y, { align: 'right' });
+          y += 4.2;
+        }
+        function bulletLine(text, indent = 5) {
+          if (!text) return;
+          const lines = doc.splitTextToSize(clean(text), CONTENT_W - indent - 3);
+          ensureSpace(lines.length * 4.2 + 0.4);
+          doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(...COLOR_TEXT);
+          doc.text('•', MARGIN_X + indent, y);
+          doc.text(lines, MARGIN_X + indent + 3, y);
+          y += lines.length * 4.2 + 0.3;
+        }
+        function paragraph(text) {
+          if (!text) return;
+          const lines = doc.splitTextToSize(clean(text), CONTENT_W);
+          ensureSpace(lines.length * 4.2 + 1);
+          doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(...COLOR_TEXT);
+          doc.text(lines, MARGIN_X, y);
+          y += lines.length * 4.2 + 1.5;
+        }
+
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(20); doc.setTextColor(...COLOR_TEXT);
+        doc.text(clean(r.name), PAGE_CENTER, y, { align: 'center' });
+        y += 6.5;
+
+        const c = r.contact || {};
+        const contactParts = [];
+        if (c.phone) contactParts.push(c.phone);
+        if (c.email) contactParts.push(c.email);
+        if (c.linkedin) contactParts.push(c.linkedin);
+        if (c.github) contactParts.push(c.github);
+        if (c.location) contactParts.push(c.location);
+        if (contactParts.length) {
+          doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(...COLOR_TEXT);
+          const contactLines = doc.splitTextToSize(clean(contactParts.join(' | ')), CONTENT_W);
+          contactLines.forEach(line => { doc.text(line, PAGE_CENTER, y, { align: 'center' }); y += 4.2; });
+        }
+        y += 0.5;
+
+        if (r.summary && r.summary.trim()) { sectionTitle('Summary'); paragraph(r.summary); }
+
+        if (Array.isArray(r.education) && r.education.length) {
+          sectionTitle('Education');
+          r.education.forEach((edu, idx) => {
+            entryHeader(edu.institution || '', edu.dates || '');
+            entrySubheader(edu.degree || '', edu.location || '');
+            if (edu.details) {
+              ensureSpace(4.2);
+              doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(...COLOR_TEXT);
+              doc.text(clean(edu.details), MARGIN_X, y); y += 4.2;
+            }
+            if (idx < r.education.length - 1) y += 1;
+          });
+          y += 1.5;
+        }
+
+        if (Array.isArray(r.experience) && r.experience.length) {
+          sectionTitle('Experience');
+          r.experience.forEach((e, idx) => {
+            entryHeader(e.role || '', e.dates || '');
+            entrySubheader(e.company || '', e.location || '');
+            (e.bullets || []).forEach(b => bulletLine(b));
+            if (idx < r.experience.length - 1) y += 1.5;
+          });
+          y += 1.5;
+        }
+
+        if (Array.isArray(r.projects) && r.projects.length) {
+          sectionTitle('Projects');
+          r.projects.forEach((p, idx) => {
+            const projectTitle = p.tech ? `${p.name} | ${p.tech}` : p.name || '';
+            entryHeader(projectTitle, p.link || '');
+            (p.bullets || []).forEach(b => bulletLine(b));
+            if (idx < r.projects.length - 1) y += 1.5;
+          });
+          y += 1.5;
+        }
+
+        if (Array.isArray(r.skills) && r.skills.length) {
+          sectionTitle('Technical Skills');
+          r.skills.forEach(s => {
+            if (!s.category && !s.items) return;
+            ensureSpace(4.5);
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(...COLOR_TEXT);
+            const cat = clean(s.category || '') + ': ';
+            doc.text(cat, MARGIN_X, y);
+            const catWidth = doc.getTextWidth(cat);
+            doc.setFont('helvetica', 'normal');
+            const itemsLines = doc.splitTextToSize(clean(s.items || ''), CONTENT_W - catWidth);
+            doc.text(itemsLines, MARGIN_X + catWidth, y);
+            y += Math.max(itemsLines.length * 4.2, 4.2) + 0.3;
+          });
+          y += 1.5;
+        }
+
+        if (Array.isArray(r.certifications) && r.certifications.length) {
+          sectionTitle('Certifications');
+          r.certifications.forEach(cert => {
+            const parts = [cert.name];
+            if (cert.issuer) parts.push(cert.issuer);
+            if (cert.date) parts.push(cert.date);
+            bulletLine(parts.filter(Boolean).join(' | '));
+          });
+          y += 1.5;
+        }
+
+        if (Array.isArray(r.extracurricular) && r.extracurricular.length) {
+          sectionTitle('Leadership');
+          r.extracurricular.forEach((ec, idx) => {
+            entryHeader(ec.role || '', ec.dates || '');
+            if (ec.organization) entrySubheader(ec.organization, '');
+            (ec.bullets || []).forEach(b => bulletLine(b));
+            if (idx < r.extracurricular.length - 1) y += 1.5;
+          });
+          y += 1.5;
+        }
+
+        if (Array.isArray(r.awards) && r.awards.length) {
+          sectionTitle('Awards');
+          r.awards.forEach(a => {
+            const parts = [a.name];
+            if (a.issuer) parts.push(a.issuer);
+            if (a.date) parts.push(a.date);
+            bulletLine(parts.filter(Boolean).join(' | '));
+          });
+          y += 1.5;
+        }
+
+        if (Array.isArray(r.interests) && r.interests.length) {
+          sectionTitle('Interests');
+          paragraph(r.interests.map(clean).filter(Boolean).join(' | '));
+        }
+
+        doc.setProperties({
+          title: clean(r.name) + ' - Resume',
+          subject: 'Resume',
+          author: clean(r.name),
+          creator: 'Braggy',
+        });
+
+        const safeName = clean(r.name).toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+        const dateStr = new Date().toISOString().slice(0, 10);
+        doc.save(`${safeName || 'resume'}-${dateStr}.pdf`);
+
+        headerBtn.disabled = false;
+        headerBtn.textContent = 'Download again';
+
+        window.dataLayer = window.dataLayer || [];
+        dataLayer.push({ event: 'editor_resume_downloaded', score: analysisData.score || 0 });
+      } catch (e) {
+        console.error('pdf generation failed', e);
+        headerBtn.disabled = false;
+        headerBtn.textContent = prevLabel;
+        alert('Could not generate PDF. Refresh the page and try again.');
+      }
+    }
 
     function escapeHtml(str) {
       return String(str ?? '')
         .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
+    document.getElementById('modal-email').addEventListener('keydown', (ev) => {
+      if (ev.key === 'Enter') { ev.preventDefault(); submitEmail(); }
+    });
+    document.getElementById('email-modal').addEventListener('click', (ev) => {
+      if (ev.target.id === 'email-modal') closeEmailModal();
+    });
   </script>
 </body>
 </html>
