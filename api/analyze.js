@@ -109,7 +109,7 @@ No skill suggestions — focus on presentation and positioning changes only.
     - "original_text": the EXACT current bullet string from rewritten_resume (so the client can find and replace it without ambiguity).
     - "issue_type": \`"estimate_needed"\` or \`"weak_rewrite"\`.
 
-    Hard limits: 3-5 items max. Order worst-first. Never reference education/skills/certs/awards/interests/summary — only the three sections listed. If a section is empty in rewritten_resume, do not emit issues for it. Indexes MUST be valid against rewritten_resume — out-of-bounds IDs break the editor UI.
+    Hard limits: 3-5 items max. Order worst-first. Never reference education/skills/certs/awards/interests/summary — only the three sections listed. If a section is empty in rewritten_resume, do not emit issues for it. Indexes MUST be valid against rewritten_resume — out-of-bounds IDs break the editor UI. If fewer than 3 weak bullets remain, skip the array entirely (empty []) rather than emitting 1-2 entries.
 
 Return strictly this JSON and nothing else:
 

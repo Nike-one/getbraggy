@@ -76,12 +76,10 @@ export default async function handler(req) {
       if (checkRes.ok) {
         const rows = await checkRes.json();
         if (rows.length > 0 && rows[0].uses_count >= 1) {
+          // Already unlocked — allow re-download, skip the increment.
           return new Response(
-            JSON.stringify({
-              error: 'limit_reached',
-              message: "This email has already unlocked an analysis. Try another, or come back when we open up more credits.",
-            }),
-            { status: 429, headers: { 'Content-Type': 'application/json' } }
+            JSON.stringify({ ok: true, already_unlocked: true }),
+            { status: 200, headers: { 'Content-Type': 'application/json' } }
           );
         }
       }
