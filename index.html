@@ -2174,9 +2174,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <div class="download-card-eyebrow">Your rewritten résumé</div>
             <div class="download-card-head">Ready to download.</div>
             <div class="download-card-sub">Clean ATS-friendly résumé with all your bullets rewritten. Ready to send to recruiters — no Braggy branding on the page.</div>
-            <button class="brag-btn download-btn" id="download-btn" onclick="downloadRewrittenResume()">
+            <button class="brag-btn download-btn" id="edit-download-btn" onclick="openEditor()">
+              <span class="download-btn-icon">✎</span>
+              <span class="download-btn-label">Edit & Download Resume</span>
+            </button>
+            <button class="brag-btn download-btn download-btn-secondary" id="download-btn" onclick="downloadRewrittenResume()" style="margin-top:0.6rem; background: transparent; color: var(--text-secondary); border: 1px solid var(--border-strong);">
               <span class="download-btn-icon">↓</span>
-              <span class="download-btn-label">Download PDF</span>
+              <span class="download-btn-label">Download PDF as-is</span>
             </button>
             <div class="download-card-meta" id="download-card-meta"></div>
           </div>
@@ -2623,6 +2627,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
     function renderResults(data) {
       analysisData = data;
+      try { localStorage.setItem('braggy_analysis', JSON.stringify(data)); } catch (e) { /* quota or private mode — non-fatal */ }
 
       const scoreEl = document.getElementById('score-value');
       const target = Math.max(0, Math.min(100, parseInt(data.score) || 0));
@@ -2785,6 +2790,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         }
 
         currentEmail = email;
+        try { localStorage.setItem('braggy_email', email); } catch (e) { /* non-fatal */ }
         window.dataLayer = window.dataLayer || [];
         dataLayer.push({ event: 'email_submitted' });
         revealLockedContent();
@@ -2841,6 +2847,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           window.scrollTo({ top: target.offsetTop - 40, behavior: 'smooth' });
         }, 80);
       }
+    }
+
+    function openEditor() {
+      if (!analysisData) return;
+      try { localStorage.setItem('braggy_analysis', JSON.stringify(analysisData)); } catch (e) {}
+      window.dataLayer = window.dataLayer || [];
+      dataLayer.push({ event: 'editor_opened', score: analysisData.score || 0 });
+      window.location.href = '/editor.html';
     }
 
     function downloadRewrittenResume() {
