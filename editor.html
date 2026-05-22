@@ -323,7 +323,130 @@
     }
 
     // === Stubs that Task 4–9 implement ===
-    function renderIssueList() {}
+    function renderIssueList() {
+      const issues = Array.isArray(analysisData.bullet_issues) ? analysisData.bullet_issues : [];
+      const headerEl = document.getElementById('issues-header');
+      const subheadEl = document.getElementById('issues-subhead');
+      const listEl = document.getElementById('issue-list');
+      const fixAllBtn = document.getElementById('fix-all-btn');
+
+      if (issues.length === 0) {
+        headerEl.textContent = 'Your resume looks strong';
+        subheadEl.textContent = 'No high-impact edits flagged. You can still tweak and re-download.';
+        listEl.innerHTML = '';
+        fixAllBtn.textContent = 'Download PDF';
+        fixAllBtn.disabled = false;
+        fixAllBtn.onclick = onDownloadClick;
+        return;
+      }
+
+      headerEl.textContent = `${issues.length} ${issues.length === 1 ? 'issue' : 'issues'} to fix`;
+      subheadEl.textContent = 'Answer the question or accept the rewrite. Hit Fix All when done.';
+
+      listEl.innerHTML = '';
+      issues.forEach((issue, idx) => {
+        const card = document.createElement('div');
+        card.className = 'issue-card';
+        card.setAttribute('data-issue-id', issue.id);
+        card.setAttribute('data-issue-index', String(idx));
+
+        const statusHtml = `
+          <div class="issue-card-status">
+            <span class="dot"></span>
+            <span class="label">${idx + 1} of ${issues.length}</span>
+          </div>`;
+
+        const bulletHtml = `<div class="issue-card-bullet">${escapeHtml(issue.original_text || '')}</div>`;
+        const contextHtml = issue.context ? `<div class="issue-card-context">${escapeHtml(issue.context)}</div>` : '';
+
+        let bodyHtml = '';
+        if (issue.issue_type === 'estimate_needed') {
+          bodyHtml = `
+            <div class="issue-card-question">${escapeHtml(issue.question || 'Add a real number:')}</div>
+            ${contextHtml}
+            <input type="text" class="issue-input" data-role="estimate-input" placeholder="e.g. 12" aria-label="${escapeHtml(issue.question || 'Estimate')}" />
+            <div class="issue-card-actions">
+              <button class="issue-btn accent" data-role="apply" onclick="applyIssue('${issue.id}')">Apply</button>
+              <button class="issue-btn" data-role="skip" onclick="skipIssue('${issue.id}')">Skip</button>
+            </div>`;
+        } else if (issue.issue_type === 'weak_rewrite') {
+          const suggested = issue.suggested_rewrite || issue.original_text || '';
+          bodyHtml = `
+            ${contextHtml}
+            <div class="issue-card-question">Suggested rewrite:</div>
+            <textarea class="issue-textarea" data-role="rewrite-text">${escapeHtml(suggested)}</textarea>
+            <div class="issue-card-actions">
+              <button class="issue-btn accent" data-role="accept" onclick="acceptRewrite('${issue.id}')">Accept</button>
+              <button class="issue-btn" data-role="skip" onclick="skipIssue('${issue.id}')">Skip</button>
+            </div>`;
+        } else {
+          bodyHtml = `<div class="issue-card-context">Unknown issue type — skip and continue.</div>
+            <div class="issue-card-actions">
+              <button class="issue-btn" data-role="skip" onclick="skipIssue('${issue.id}')">Skip</button>
+            </div>`;
+        }
+
+        card.innerHTML = statusHtml + bulletHtml + bodyHtml;
+        listEl.appendChild(card);
+      });
+
+      fixAllBtn.disabled = false;
+      fixAllBtn.textContent = 'Fix All in One Go';
+      fixAllBtn.onclick = fixAll;
+    }
+
+    // Per-issue state — tracks which issues the user has resolved and what their answer was.
+    // resolved[id] = { answer: string }
+    const resolved = Object.create(null);
+
+    function markCardResolved(id) {
+      const card = document.querySelector(`.issue-card[data-issue-id="${cssEscape(id)}"]`);
+      if (card) {
+        card.classList.add('resolved');
+        const label = card.querySelector('.issue-card-status .label');
+        if (label) label.textContent = 'resolved';
+      }
+      const bullet = document.querySelector(`.issue-bullet[data-issue-id="${cssEscape(id)}"]`);
+      if (bullet) bullet.classList.add('resolved');
+    }
+
+    function applyIssue(id) {
+      const card = document.querySelector(`.issue-card[data-issue-id="${cssEscape(id)}"]`);
+      if (!card) return;
+      const input = card.querySelector('input[data-role="estimate-input"]');
+      const value = (input?.value || '').trim();
+      if (!value) {
+        input.focus();
+        input.style.borderColor = 'var(--accent)';
+        return;
+      }
+      resolved[id] = { answer: value };
+      markCardResolved(id);
+    }
+
+    function acceptRewrite(id) {
+      const card = document.querySelector(`.issue-card[data-issue-id="${cssEscape(id)}"]`);
+      if (!card) return;
+      const ta = card.querySelector('textarea[data-role="rewrite-text"]');
+      const value = (ta?.value || '').trim();
+      if (!value) {
+        ta.focus();
+        return;
+      }
+      resolved[id] = { answer: value };
+      markCardResolved(id);
+    }
+
+    function skipIssue(id) {
+      resolved[id] = { skipped: true };
+      markCardResolved(id);
+    }
+
+    // CSS.escape polyfill for older Safari (rare but cheap)
+    function cssEscape(str) {
+      if (window.CSS && CSS.escape) return CSS.escape(str);
+      return String(str).replace(/[^a-zA-Z0-9_-]/g, ch => '\\' + ch);
+    }
     function renderResumePreview() {}
     function wireTooltips() {}
     function wireBulletClicks() {}
