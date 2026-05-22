@@ -86,6 +86,31 @@ No skill suggestions — focus on presentation and positioning changes only.
     - Use plain ASCII throughout this object. Use "Resume" not "Résumé". No ₹ symbol (the résumé doesn't need it). No em-dashes (use hyphens).
     - Each slot is OPTIONAL — leave as an empty array if the user has no data for it. Do not invent a section just to fill it.
 
+13. BULLET ISSUES: Identify 3-5 bullets in rewritten_resume that are still weak after your rewrite — the highest-impact next edits the user could make. Each entry tells the editor UI which specific bullet to flag and what to ask the user for. NEVER emit more than 5 entries; rank by impact (worst-first). Skip this array entirely (empty []) if every bullet is already strong.
+
+    Two issue types — pick exactly one per entry:
+
+    A) "estimate_needed" — the bullet is qualitative but would land much harder with a real number the user can plausibly recall (team size, count of events, dataset size, audience). Use ONLY when the activity is real in the original résumé — do not invent activities to ask about.
+       Required fields:
+       - "question": one short sentence asking the user for the number. Example: "How many members were in the club?"
+       - "context": one short sentence on WHY this matters. Example: "Adding team size strengthens leadership signal."
+       - "rewritten_template": the final bullet text with a single \`{placeholder}\` token where the user's answer will be substituted. The token name must match the answer being asked. Example: "Led ~{team_size}-member technical club as VP; ran weekly hack-nights and mentored juniors". The client will substitute the user's input verbatim into \`{team_size}\` — so write the template so any reasonable answer (e.g. "12", "25") slots in grammatically.
+
+    B) "weak_rewrite" — the bullet has no number to add but the current rewrite is still task-y or vague. Provide a sharper rewrite the user can accept or edit. NO {placeholder} tokens — this is a final string.
+       Required fields:
+       - "context": one short sentence on what's wrong. Example: "Bullet has no outcome — reads like a task list."
+       - "suggested_rewrite": the improved bullet. Same THREE RULES as the rewrites field (source-grounded, tilde for estimates, qualitative fallback). Keep under 25 words.
+
+    Common fields for both types:
+    - "id": deterministic ID in the format \`<section-prefix>-<entry_index>-<bullet_index>\`. Section prefixes: \`exp\` (experience), \`proj\` (projects), \`extra\` (extracurricular). Example: \`exp-0-1\` = experience entry index 0, bullet index 1.
+    - "section": one of \`"experience"\`, \`"projects"\`, \`"extracurricular"\`.
+    - "entry_index": integer matching the index in the corresponding rewritten_resume array.
+    - "bullet_index": integer index of the bullet inside that entry's \`bullets\` array.
+    - "original_text": the EXACT current bullet string from rewritten_resume (so the client can find and replace it without ambiguity).
+    - "issue_type": \`"estimate_needed"\` or \`"weak_rewrite"\`.
+
+    Hard limits: 3-5 items max. Order worst-first. Never reference education/skills/certs/awards/interests/summary — only the three sections listed. If a section is empty in rewritten_resume, do not emit issues for it. Indexes MUST be valid against rewritten_resume — out-of-bounds IDs break the editor UI.
+
 Return strictly this JSON and nothing else:
 
 {
@@ -159,7 +184,21 @@ Return strictly this JSON and nothing else:
       {"name": "<award name>", "issuer": "<or empty>", "date": "<or empty>"}
     ],
     "interests": ["<interest>", "<interest>"]
-  }
+  },
+  "bullet_issues": [
+    {
+      "id": "<section-prefix>-<entry_index>-<bullet_index>",
+      "section": "experience|projects|extracurricular",
+      "entry_index": <integer>,
+      "bullet_index": <integer>,
+      "original_text": "<exact current bullet from rewritten_resume>",
+      "issue_type": "estimate_needed|weak_rewrite",
+      "question": "<only for estimate_needed, else omit>",
+      "context": "<one sentence>",
+      "rewritten_template": "<only for estimate_needed: bullet with one {placeholder} token>",
+      "suggested_rewrite": "<only for weak_rewrite: final bullet text>"
+    }
+  ]
 }
 
 Rules:
