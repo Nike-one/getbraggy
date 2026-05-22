@@ -447,7 +447,120 @@
       if (window.CSS && CSS.escape) return CSS.escape(str);
       return String(str).replace(/[^a-zA-Z0-9_-]/g, ch => '\\' + ch);
     }
-    function renderResumePreview() {}
+    function renderResumePreview() {
+      const r = analysisData.rewritten_resume || {};
+      const paper = document.getElementById('resume-paper');
+      const issues = Array.isArray(analysisData.bullet_issues) ? analysisData.bullet_issues : [];
+
+      // Build a lookup: section + entry_index + bullet_index → issue object
+      const issueIndex = Object.create(null);
+      issues.forEach(i => {
+        const key = `${i.section}|${i.entry_index}|${i.bullet_index}`;
+        issueIndex[key] = i;
+      });
+
+      function bulletEl(text, section, entryIdx, bulletIdx) {
+        const key = `${section}|${entryIdx}|${bulletIdx}`;
+        const issue = issueIndex[key];
+        if (issue) {
+          const isResolved = resolved[issue.id] && !resolved[issue.id].skipped;
+          return `<li class="issue-bullet${isResolved ? ' resolved' : ''}" data-issue-id="${escapeHtml(issue.id)}">${escapeHtml(text)}</li>`;
+        }
+        return `<li>${escapeHtml(text)}</li>`;
+      }
+
+      const parts = [];
+
+      // Name + contact
+      parts.push(`<h1>${escapeHtml(r.name || '')}</h1>`);
+      const c = r.contact || {};
+      const contactBits = [c.phone, c.email, c.linkedin, c.github, c.location].filter(Boolean).map(escapeHtml);
+      if (contactBits.length) parts.push(`<div class="contact-line">${contactBits.join(' &nbsp;|&nbsp; ')}</div>`);
+
+      if (r.summary && r.summary.trim()) {
+        parts.push(`<h2>Summary</h2><div>${escapeHtml(r.summary)}</div>`);
+      }
+
+      if (Array.isArray(r.education) && r.education.length) {
+        parts.push('<h2>Education</h2>');
+        r.education.forEach(e => {
+          parts.push(`
+            <div class="entry">
+              <div class="entry-head"><span>${escapeHtml(e.institution || '')}</span><span>${escapeHtml(e.dates || '')}</span></div>
+              <div class="entry-sub"><span>${escapeHtml(e.degree || '')}</span><span>${escapeHtml(e.location || '')}</span></div>
+              ${e.details ? `<div>${escapeHtml(e.details)}</div>` : ''}
+            </div>`);
+        });
+      }
+
+      if (Array.isArray(r.experience) && r.experience.length) {
+        parts.push('<h2>Experience</h2>');
+        r.experience.forEach((e, ei) => {
+          parts.push(`
+            <div class="entry">
+              <div class="entry-head"><span>${escapeHtml(e.role || '')}</span><span>${escapeHtml(e.dates || '')}</span></div>
+              <div class="entry-sub"><span>${escapeHtml(e.company || '')}</span><span>${escapeHtml(e.location || '')}</span></div>
+              <ul>${(e.bullets || []).map((b, bi) => bulletEl(b, 'experience', ei, bi)).join('')}</ul>
+            </div>`);
+        });
+      }
+
+      if (Array.isArray(r.projects) && r.projects.length) {
+        parts.push('<h2>Projects</h2>');
+        r.projects.forEach((p, pi) => {
+          const title = p.tech ? `${escapeHtml(p.name || '')} | ${escapeHtml(p.tech)}` : escapeHtml(p.name || '');
+          parts.push(`
+            <div class="entry">
+              <div class="entry-head"><span>${title}</span><span>${escapeHtml(p.link || '')}</span></div>
+              <ul>${(p.bullets || []).map((b, bi) => bulletEl(b, 'projects', pi, bi)).join('')}</ul>
+            </div>`);
+        });
+      }
+
+      if (Array.isArray(r.skills) && r.skills.length) {
+        parts.push('<h2>Technical Skills</h2>');
+        r.skills.forEach(s => {
+          if (!s.category && !s.items) return;
+          parts.push(`<div class="skills-line"><b>${escapeHtml(s.category || '')}:</b> ${escapeHtml(s.items || '')}</div>`);
+        });
+      }
+
+      if (Array.isArray(r.certifications) && r.certifications.length) {
+        parts.push('<h2>Certifications</h2><ul>');
+        r.certifications.forEach(cert => {
+          const bits = [cert.name, cert.issuer, cert.date].filter(Boolean).map(escapeHtml).join(' | ');
+          parts.push(`<li>${bits}</li>`);
+        });
+        parts.push('</ul>');
+      }
+
+      if (Array.isArray(r.extracurricular) && r.extracurricular.length) {
+        parts.push('<h2>Leadership</h2>');
+        r.extracurricular.forEach((ec, ei) => {
+          parts.push(`
+            <div class="entry">
+              <div class="entry-head"><span>${escapeHtml(ec.role || '')}</span><span>${escapeHtml(ec.dates || '')}</span></div>
+              ${ec.organization ? `<div class="entry-sub"><span>${escapeHtml(ec.organization)}</span><span></span></div>` : ''}
+              <ul>${(ec.bullets || []).map((b, bi) => bulletEl(b, 'extracurricular', ei, bi)).join('')}</ul>
+            </div>`);
+        });
+      }
+
+      if (Array.isArray(r.awards) && r.awards.length) {
+        parts.push('<h2>Awards</h2><ul>');
+        r.awards.forEach(a => {
+          const bits = [a.name, a.issuer, a.date].filter(Boolean).map(escapeHtml).join(' | ');
+          parts.push(`<li>${bits}</li>`);
+        });
+        parts.push('</ul>');
+      }
+
+      if (Array.isArray(r.interests) && r.interests.length) {
+        parts.push(`<h2>Interests</h2><div>${r.interests.map(escapeHtml).join(' &nbsp;|&nbsp; ')}</div>`);
+      }
+
+      paper.innerHTML = parts.join('');
+    }
     function wireTooltips() {}
     function wireBulletClicks() {}
     function fixAll() {}
