@@ -643,7 +643,71 @@
         }
       }
     }
-    function fixAll() {}
+    function fixAll() {
+      const issues = Array.isArray(analysisData.bullet_issues) ? analysisData.bullet_issues : [];
+
+      // First pass — for any unresolved cards, harvest their input values automatically.
+      // This lets the user fill inputs and just click "Fix All" without clicking Apply on each.
+      issues.forEach(issue => {
+        if (resolved[issue.id]) return;
+        const card = document.querySelector(`.issue-card[data-issue-id="${cssEscape(issue.id)}"]`);
+        if (!card) return;
+        if (issue.issue_type === 'estimate_needed') {
+          const v = (card.querySelector('input[data-role="estimate-input"]')?.value || '').trim();
+          if (v) resolved[issue.id] = { answer: v };
+        } else if (issue.issue_type === 'weak_rewrite') {
+          const v = (card.querySelector('textarea[data-role="rewrite-text"]')?.value || '').trim();
+          if (v) resolved[issue.id] = { answer: v };
+        }
+      });
+
+      // Apply substitutions into analysisData.rewritten_resume in place.
+      const r = analysisData.rewritten_resume;
+      const sectionMap = { experience: r.experience, projects: r.projects, extracurricular: r.extracurricular };
+
+      issues.forEach(issue => {
+        const state = resolved[issue.id];
+        if (!state || state.skipped) return;
+        const arr = sectionMap[issue.section];
+        if (!Array.isArray(arr)) return;
+        const entry = arr[issue.entry_index];
+        if (!entry || !Array.isArray(entry.bullets)) return;
+        if (issue.bullet_index < 0 || issue.bullet_index >= entry.bullets.length) return;
+
+        let newBullet = '';
+        if (issue.issue_type === 'estimate_needed') {
+          const template = issue.rewritten_template || issue.original_text || '';
+          // Replace ALL {placeholder} tokens with the user's answer. We don't care what the
+          // placeholder name is — the prompt guarantees exactly one token per template.
+          newBullet = template.replace(/\{[^}]+\}/g, state.answer);
+        } else if (issue.issue_type === 'weak_rewrite') {
+          newBullet = state.answer;
+        } else {
+          return;
+        }
+        entry.bullets[issue.bullet_index] = newBullet;
+      });
+
+      // Persist updated data so a reload (or Download click) sees the fixes.
+      try { localStorage.setItem('braggy_analysis', JSON.stringify(analysisData)); } catch (e) {}
+
+      // Mark resolved cards visually + re-render preview so the new bullets show up green.
+      Object.keys(resolved).forEach(markCardResolved);
+      renderResumePreview();
+      // Re-wire tooltips/clicks because we replaced #resume-paper innerHTML.
+      // (wireTooltips/wireBulletClicks attach listeners to the paper element which itself is
+      // not replaced — children are. The listeners use event delegation via .closest so they
+      // still work on the new DOM. No re-wiring needed.)
+
+      // Show success state and scroll right pane to top.
+      const successEl = document.getElementById('fix-all-success');
+      successEl.classList.add('show');
+      const paneRight = document.getElementById('pane-right');
+      paneRight.scrollTo({ top: 0, behavior: 'smooth' });
+
+      window.dataLayer = window.dataLayer || [];
+      dataLayer.push({ event: 'editor_fix_all', resolved_count: Object.values(resolved).filter(v => !v.skipped).length });
+    }
     function onDownloadClick() {}
     function submitEmail() {}
 
