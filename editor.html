@@ -266,6 +266,7 @@
         <div class="fix-all-bar">
           <button class="fix-all-btn" id="fix-all-btn" onclick="fixAll()" disabled>Fix All in One Go</button>
           <div class="fix-all-success" id="fix-all-success">Resume updated — ready to download</div>
+          <div id="fix-all-error" style="display:none; color:#ef4444; font-size:0.82rem; margin-top:0.5rem; text-align:center;"></div>
         </div>
       </aside>
       <section class="pane pane-right" id="pane-right">
@@ -306,6 +307,9 @@
     const DEV_KEY = (() => {
       try { return localStorage.getItem('braggy_dev_key') || ''; } catch { return ''; }
     })();
+
+    // Must be initialized before bootEditor() runs — renderResumePreview reads it
+    const resolved = Object.create(null);
 
     if (!analysisData || !analysisData.rewritten_resume) {
       document.getElementById('editor-body').style.display = 'none';
@@ -394,10 +398,6 @@
       fixAllBtn.textContent = 'Fix All in One Go';
       fixAllBtn.onclick = fixAll;
     }
-
-    // Per-issue state — tracks which issues the user has resolved and what their answer was.
-    // resolved[id] = { answer: string }
-    const resolved = Object.create(null);
 
     function markCardResolved(id) {
       const card = document.querySelector(`.issue-card[data-issue-id="${cssEscape(id)}"]`);
@@ -643,11 +643,12 @@
         }
       }
     }
-    function fixAll() {
+    async function fixAll() {
       const issues = Array.isArray(analysisData.bullet_issues) ? analysisData.bullet_issues : [];
+      const btn = document.getElementById('fix-all-btn');
+      const errorEl = document.getElementById('fix-all-error');
 
-      // First pass — for any unresolved cards, harvest their input values automatically.
-      // This lets the user fill inputs and just click "Fix All" without clicking Apply on each.
+      // Harvest any filled but not-yet-applied inputs
       issues.forEach(issue => {
         if (resolved[issue.id]) return;
         const card = document.querySelector(`.issue-card[data-issue-id="${cssEscape(issue.id)}"]`);
@@ -661,52 +662,90 @@
         }
       });
 
-      // Apply substitutions into analysisData.rewritten_resume in place.
-      const r = analysisData.rewritten_resume;
-      const sectionMap = { experience: r.experience, projects: r.projects, extracurricular: r.extracurricular };
+      // Build payload — only non-skipped issues that have an answer
+      const payload = issues
+        .filter(issue => resolved[issue.id] && !resolved[issue.id].skipped)
+        .map(issue => ({
+          id: issue.id,
+          section: issue.section,
+          entry_index: issue.entry_index,
+          bullet_index: issue.bullet_index,
+          original_text: issue.original_text,
+          issue_type: issue.issue_type,
+          user_answer: resolved[issue.id].answer,
+          context: issue.context || '',
+          rewritten_template: issue.rewritten_template || '',
+          suggested_rewrite: issue.suggested_rewrite || '',
+        }));
 
-      issues.forEach(issue => {
-        const state = resolved[issue.id];
-        if (!state || state.skipped) return;
-        const arr = sectionMap[issue.section];
-        if (!Array.isArray(arr)) return;
-        const entry = arr[issue.entry_index];
-        if (!entry || !Array.isArray(entry.bullets)) return;
-        if (issue.bullet_index < 0 || issue.bullet_index >= entry.bullets.length) return;
+      if (payload.length === 0) {
+        // Nothing to send — just re-render with skipped issues marked
+        Object.keys(resolved).forEach(markCardResolved);
+        renderResumePreview();
+        document.getElementById('fix-all-success').classList.add('show');
+        return;
+      }
 
-        let newBullet = '';
-        if (issue.issue_type === 'estimate_needed') {
-          const template = issue.rewritten_template || issue.original_text || '';
-          // Replace ALL {placeholder} tokens with the user's answer. We don't care what the
-          // placeholder name is — the prompt guarantees exactly one token per template.
-          newBullet = template.replace(/\{[^}]+\}/g, state.answer);
-        } else if (issue.issue_type === 'weak_rewrite') {
-          newBullet = state.answer;
-        } else {
-          return;
+      // Loading state
+      btn.disabled = true;
+      const prevLabel = btn.textContent;
+      btn.textContent = 'Rewriting with AI…';
+      if (errorEl) errorEl.style.display = 'none';
+
+      try {
+        const res = await fetch('/api/rewrite-bullets', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            bullets: payload,
+            ...(DEV_KEY && { dev_key: DEV_KEY }),
+          }),
+        });
+
+        let data = {};
+        try { data = await res.json(); } catch (_) {}
+
+        if (!res.ok || !data.bullets) {
+          throw new Error(data.error || `API error ${res.status}`);
         }
-        entry.bullets[issue.bullet_index] = newBullet;
-      });
 
-      // Persist updated data so a reload (or Download click) sees the fixes.
-      try { localStorage.setItem('braggy_analysis', JSON.stringify(analysisData)); } catch (e) {}
+        // Apply LLM rewrites into analysisData.rewritten_resume
+        const r = analysisData.rewritten_resume;
+        const sectionMap = { experience: r.experience, projects: r.projects, extracurricular: r.extracurricular };
 
-      // Mark resolved cards visually + re-render preview so the new bullets show up green.
-      Object.keys(resolved).forEach(markCardResolved);
-      renderResumePreview();
-      // Re-wire tooltips/clicks because we replaced #resume-paper innerHTML.
-      // (wireTooltips/wireBulletClicks attach listeners to the paper element which itself is
-      // not replaced — children are. The listeners use event delegation via .closest so they
-      // still work on the new DOM. No re-wiring needed.)
+        data.bullets.forEach(({ id, rewritten }) => {
+          const issue = issues.find(i => i.id === id);
+          if (!issue || !rewritten) return;
+          const arr = sectionMap[issue.section];
+          if (!Array.isArray(arr)) return;
+          const entry = arr[issue.entry_index];
+          if (!entry || !Array.isArray(entry.bullets)) return;
+          if (issue.bullet_index < 0 || issue.bullet_index >= entry.bullets.length) return;
+          entry.bullets[issue.bullet_index] = rewritten;
+        });
 
-      // Show success state and scroll right pane to top.
-      const successEl = document.getElementById('fix-all-success');
-      successEl.classList.add('show');
-      const paneRight = document.getElementById('pane-right');
-      paneRight.scrollTo({ top: 0, behavior: 'smooth' });
+        try { localStorage.setItem('braggy_analysis', JSON.stringify(analysisData)); } catch (e) {}
 
-      window.dataLayer = window.dataLayer || [];
-      dataLayer.push({ event: 'editor_fix_all', resolved_count: Object.values(resolved).filter(v => !v.skipped).length });
+        Object.keys(resolved).forEach(markCardResolved);
+        renderResumePreview();
+
+        const successEl = document.getElementById('fix-all-success');
+        successEl.classList.add('show');
+        document.getElementById('pane-right').scrollTo({ top: 0, behavior: 'smooth' });
+
+        window.dataLayer = window.dataLayer || [];
+        dataLayer.push({ event: 'editor_fix_all', resolved_count: payload.length });
+
+        btn.disabled = false;
+        btn.textContent = prevLabel;
+      } catch (e) {
+        btn.disabled = false;
+        btn.textContent = prevLabel;
+        if (errorEl) {
+          errorEl.textContent = e.message || 'Something went wrong. Try again.';
+          errorEl.style.display = 'block';
+        }
+      }
     }
     function onDownloadClick() {
       if (!analysisData?.rewritten_resume) return;
