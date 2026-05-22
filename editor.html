@@ -561,7 +561,50 @@
 
       paper.innerHTML = parts.join('');
     }
-    function wireTooltips() {}
+    function wireTooltips() {
+      const tooltip = document.getElementById('issue-tooltip');
+      const paper = document.getElementById('resume-paper');
+      const issues = Array.isArray(analysisData.bullet_issues) ? analysisData.bullet_issues : [];
+      const byId = Object.create(null);
+      issues.forEach(i => { byId[i.id] = i; });
+
+      function showTooltip(target, ev) {
+        const id = target.getAttribute('data-issue-id');
+        const issue = byId[id];
+        if (!issue) return;
+        const contextHtml = issue.context ? `<div class="issue-tooltip-context">${escapeHtml(issue.context)}</div>` : '';
+        const mainHtml = issue.issue_type === 'estimate_needed' && issue.question
+          ? `<div class="issue-tooltip-question">${escapeHtml(issue.question)}</div>`
+          : `<div class="issue-tooltip-question">Click to edit this bullet →</div>`;
+        tooltip.innerHTML = contextHtml + mainHtml;
+        positionTooltip(ev);
+        tooltip.classList.add('show');
+      }
+      function hideTooltip() { tooltip.classList.remove('show'); }
+      function positionTooltip(ev) {
+        const pad = 14;
+        const w = tooltip.offsetWidth || 280;
+        const h = tooltip.offsetHeight || 60;
+        let x = ev.clientX + pad;
+        let y = ev.clientY + pad;
+        if (x + w + pad > window.innerWidth) x = ev.clientX - w - pad;
+        if (y + h + pad > window.innerHeight) y = ev.clientY - h - pad;
+        tooltip.style.left = Math.max(8, x) + 'px';
+        tooltip.style.top = Math.max(8, y) + 'px';
+      }
+
+      paper.addEventListener('mouseover', (ev) => {
+        const target = ev.target.closest('.issue-bullet');
+        if (target) showTooltip(target, ev);
+      });
+      paper.addEventListener('mousemove', (ev) => {
+        if (tooltip.classList.contains('show')) positionTooltip(ev);
+      });
+      paper.addEventListener('mouseout', (ev) => {
+        const target = ev.target.closest('.issue-bullet');
+        if (target && !target.contains(ev.relatedTarget)) hideTooltip();
+      });
+    }
     function wireBulletClicks() {}
     function fixAll() {}
     function onDownloadClick() {}
