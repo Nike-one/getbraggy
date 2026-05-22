@@ -605,7 +605,44 @@
         if (target && !target.contains(ev.relatedTarget)) hideTooltip();
       });
     }
-    function wireBulletClicks() {}
+    function wireBulletClicks() {
+      const paper = document.getElementById('resume-paper');
+      const paneLeft = document.getElementById('pane-left');
+
+      paper.addEventListener('click', (ev) => {
+        const target = ev.target.closest('.issue-bullet');
+        if (!target) return;
+        const id = target.getAttribute('data-issue-id');
+        focusIssueCard(id);
+      });
+
+      function focusIssueCard(id) {
+        const card = document.querySelector(`.issue-card[data-issue-id="${cssEscape(id)}"]`);
+        if (!card) return;
+
+        // Strip focus from any other card
+        document.querySelectorAll('.issue-card.focused').forEach(el => el.classList.remove('focused'));
+        card.classList.add('focused');
+
+        // Smooth scroll the LEFT pane so the card is visible. Use scrollTop math because
+        // scrollIntoView({block:'nearest'}) would scroll the whole window — we want the
+        // scroll contained to the left pane.
+        const cardTop = card.offsetTop;
+        const cardHeight = card.offsetHeight;
+        const paneHeight = paneLeft.clientHeight;
+        const targetScroll = Math.max(0, cardTop - (paneHeight / 2) + (cardHeight / 2));
+        paneLeft.scrollTo({ top: targetScroll, behavior: 'smooth' });
+
+        // Focus the relevant input so the user can type immediately.
+        const issues = analysisData.bullet_issues || [];
+        const issue = issues.find(i => i.id === id);
+        if (issue?.issue_type === 'estimate_needed') {
+          setTimeout(() => card.querySelector('input[data-role="estimate-input"]')?.focus(), 250);
+        } else if (issue?.issue_type === 'weak_rewrite') {
+          setTimeout(() => card.querySelector('textarea[data-role="rewrite-text"]')?.focus(), 250);
+        }
+      }
+    }
     function fixAll() {}
     function onDownloadClick() {}
     function submitEmail() {}
