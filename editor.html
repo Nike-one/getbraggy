@@ -72,7 +72,7 @@
     }
 
     .pane { background: var(--bg); overflow-y: auto; }
-    .pane-left { padding: 1.25rem 1.1rem 6rem 1.1rem; max-height: calc(100vh - 60px); position: relative; }
+    .pane-left { padding: 1.25rem 1.1rem 2rem 1.1rem; max-height: calc(100vh - 60px); position: relative; }
     .pane-right { padding: 2rem 2.2rem; max-height: calc(100vh - 60px); }
 
     .issues-header {
@@ -129,10 +129,7 @@
     .issue-btn.accent:hover { background: var(--accent); color: #0a0a0a; }
 
     .fix-all-bar {
-      position: sticky; bottom: 0; left: 0; right: 0;
-      padding: 0.85rem 1.1rem;
-      background: linear-gradient(180deg, rgba(10,10,10,0) 0%, var(--bg) 30%);
-      margin: 0 -1.1rem -6rem -1.1rem;
+      padding: 1.5rem 0 0.5rem;
     }
     .fix-all-btn {
       width: 100%;
@@ -410,6 +407,17 @@
       if (bullet) bullet.classList.add('resolved');
     }
 
+    function commitBullet(issue, text) {
+      const section = analysisData.rewritten_resume?.[issue.section];
+      if (!Array.isArray(section)) return;
+      const entry = section[issue.entry_index];
+      if (!entry || !Array.isArray(entry.bullets)) return;
+      if (issue.bullet_index < 0 || issue.bullet_index >= entry.bullets.length) return;
+      entry.bullets[issue.bullet_index] = text;
+      try { localStorage.setItem('braggy_analysis', JSON.stringify(analysisData)); } catch {}
+      renderResumePreview();
+    }
+
     function applyIssue(id) {
       const card = document.querySelector(`.issue-card[data-issue-id="${cssEscape(id)}"]`);
       if (!card) return;
@@ -422,6 +430,12 @@
       }
       resolved[id] = { answer: value };
       markCardResolved(id);
+      const issue = (analysisData.bullet_issues || []).find(i => i.id === id);
+      if (issue) {
+        const fmt = /^\d+(\.\d+)?[KkMmBb%]?$/.test(value) ? `~${value}` : value;
+        const text = (issue.rewritten_template || issue.original_text).replace('{placeholder}', fmt);
+        commitBullet(issue, text);
+      }
     }
 
     function acceptRewrite(id) {
@@ -435,6 +449,8 @@
       }
       resolved[id] = { answer: value };
       markCardResolved(id);
+      const issue = (analysisData.bullet_issues || []).find(i => i.id === id);
+      if (issue) commitBullet(issue, value);
     }
 
     function skipIssue(id) {

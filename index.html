@@ -2101,7 +2101,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <span class="micro">~10 seconds · No email needed to start · Your résumé stays private</span>
         </div>
 
-        <div class="cf-turnstile" data-sitekey="0x4AAAAAADKf1rmg08gq3LcK" data-callback="onTurnstileSuccess" data-theme="dark" style="margin-top: 1rem;"></div>
+        <div id="turnstile-widget" class="cf-turnstile" data-sitekey="0x4AAAAAADKf1rmg08gq3LcK" data-callback="onTurnstileSuccess" data-theme="dark" style="margin-top: 1rem;"></div>
 
         <div class="error-msg" id="error-msg"></div>
       </div>
@@ -2466,12 +2466,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       try { return localStorage.getItem('braggy_dev_key') || ''; } catch { return ''; }
     })();
     if (DEV_KEY) {
+      turnstileToken = 'dev-bypass';
       if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
           document.getElementById('dev-badge')?.classList.add('show');
+          const tw = document.getElementById('turnstile-widget');
+          if (tw) { tw.style.display = 'none'; tw.classList.remove('cf-turnstile'); }
         });
       } else {
         document.getElementById('dev-badge')?.classList.add('show');
+        const tw = document.getElementById('turnstile-widget');
+        if (tw) { tw.style.display = 'none'; tw.classList.remove('cf-turnstile'); }
       }
     }
 
