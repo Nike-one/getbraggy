@@ -2656,6 +2656,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         if (done) break;
         accumulated += dec.decode(value, { stream: true });
       }
+      accumulated += dec.decode();
       return accumulated;
     }
 
