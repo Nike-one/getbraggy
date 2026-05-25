@@ -176,7 +176,7 @@ export default async function handler(req) {
         }
       },
       flush(controller) {
-        sseBuffer += decoder.decode('', { stream: false });
+        sseBuffer += decoder.decode();
         if (sseBuffer.startsWith('data: ')) {
           const jsonStr = sseBuffer.slice(6).trim();
           try {
