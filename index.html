@@ -2462,6 +2462,80 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     let turnstileToken = '';
     let analysisData = null;
 
+    function extractFieldValue(buffer, fieldName) {
+      const re = new RegExp('"' + fieldName + '"\\s*:\\s*');
+      const m = re.exec(buffer);
+      if (!m) return undefined;
+      const start = m.index + m[0].length;
+      const ch = buffer[start];
+      if (!ch) return undefined;
+
+      if (ch === '"') {
+        let i = start + 1;
+        while (i < buffer.length) {
+          if (buffer[i] === '\\') { i += 2; continue; }
+          if (buffer[i] === '"') {
+            try { return JSON.parse(buffer.slice(start, i + 1)); } catch { return undefined; }
+          }
+          i++;
+        }
+        return undefined;
+      }
+      if (/[-\d]/.test(ch)) {
+        const nm = /^(-?\d+(\.\d+)?)/.exec(buffer.slice(start));
+        return nm ? parseFloat(nm[1]) : undefined;
+      }
+      if (ch === '[') {
+        let depth = 0, i = start, inStr = false;
+        while (i < buffer.length) {
+          const c = buffer[i];
+          if (inStr) {
+            if (c === '\\') i++;
+            else if (c === '"') inStr = false;
+          } else {
+            if (c === '"') inStr = true;
+            else if (c === '[') depth++;
+            else if (c === ']') {
+              depth--;
+              if (!depth) {
+                try { return JSON.parse(buffer.slice(start, i + 1)); } catch { return undefined; }
+              }
+            }
+          }
+          i++;
+        }
+        return undefined;
+      }
+      return undefined;
+    }
+
+    function extractPartialString(buffer, fieldName) {
+      const re = new RegExp('"' + fieldName + '"\\s*:\\s*"');
+      const m = re.exec(buffer);
+      if (!m) return undefined;
+      const start = m.index + m[0].length;
+      let i = start;
+      let out = '';
+      while (i < buffer.length) {
+        const c = buffer[i];
+        if (c === '\\') {
+          if (i + 1 >= buffer.length) break;
+          const next = buffer[i + 1];
+          if (next === 'n') out += '\n';
+          else if (next === 't') out += '\t';
+          else if (next === 'r') out += '\r';
+          else out += next;
+          i += 2;
+        } else if (c === '"') {
+          break;
+        } else {
+          out += c;
+          i++;
+        }
+      }
+      return out;
+    }
+
     const DEV_KEY = (() => {
       try { return localStorage.getItem('braggy_dev_key') || ''; } catch { return ''; }
     })();
@@ -2603,7 +2677,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           if (loadingMsgEl) loadingMsgEl.textContent = streamMsgs[streamMsgIdx];
         }, 1500);
 
-        const previewText = await readStreamToText(res);
+        const previewText = await readPreviewStreamProgressive(res);
         clearInterval(streamMsgInterval);
         document.getElementById('loading-state').classList.remove('show');
 
@@ -2647,17 +2721,98 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       }
     }
 
-    async function readStreamToText(res) {
+    async function readPreviewStreamProgressive(res) {
       const reader = res.body.getReader();
       const dec = new TextDecoder();
       let accumulated = '';
+      const seen = {};
+
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
         accumulated += dec.decode(value, { stream: true });
+
+        if (!seen.score) {
+          const score = extractFieldValue(accumulated, 'score');
+          if (typeof score === 'number') {
+            seen.score = true;
+            showPreviewScaffold();
+            animateScore(score);
+          }
+        }
+
+        if (!seen.profile_chips) {
+          const chips = extractFieldValue(accumulated, 'profile_chips');
+          if (Array.isArray(chips)) {
+            seen.profile_chips = true;
+            renderChipsImmediate(chips);
+          }
+        }
+
+        if (!seen.recruiter_reaction) {
+          const partial = extractPartialString(accumulated, 'recruiter_reaction');
+          if (partial !== undefined) {
+            const reactEl = document.getElementById('recruiter-reaction-text');
+            if (reactEl && partial.length > (reactEl.textContent || '').length) {
+              reactEl.textContent = partial;
+            }
+            const full = extractFieldValue(accumulated, 'recruiter_reaction');
+            if (typeof full === 'string') seen.recruiter_reaction = true;
+          }
+        }
+
+        if (!seen.red_flags) {
+          const flags = extractFieldValue(accumulated, 'red_flags');
+          if (Array.isArray(flags)) {
+            seen.red_flags = true;
+            renderRedFlagsImmediate(flags);
+          }
+        }
       }
       accumulated += dec.decode();
       return accumulated;
+    }
+
+    function showPreviewScaffold() {
+      document.getElementById('loading-state').classList.remove('show');
+      document.getElementById('results-state').classList.add('show');
+    }
+
+    function animateScore(target) {
+      const scoreEl = document.getElementById('score-value');
+      if (!scoreEl) return;
+      const safe = Math.max(0, Math.min(100, parseInt(target) || 0));
+      let current = 0;
+      const step = Math.max(1, Math.floor(safe / 30));
+      const interval = setInterval(() => {
+        current += step;
+        if (current >= safe) { current = safe; clearInterval(interval); }
+        scoreEl.textContent = current;
+      }, 30);
+    }
+
+    function renderChipsImmediate(chips) {
+      const chipsEl = document.getElementById('profile-chips');
+      if (!chipsEl) return;
+      chipsEl.innerHTML = '';
+      chips.forEach(chip => {
+        const span = document.createElement('span');
+        span.className = 'chip';
+        span.textContent = chip;
+        chipsEl.appendChild(span);
+      });
+    }
+
+    function renderRedFlagsImmediate(flags) {
+      const rfList = document.getElementById('red-flags-list');
+      if (!rfList) return;
+      rfList.innerHTML = '';
+      flags.forEach(flag => {
+        const li = document.createElement('li');
+        li.className = 'red-flag-item';
+        li.textContent = flag;
+        rfList.appendChild(li);
+      });
     }
 
     function renderResults(data) {
@@ -2666,13 +2821,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
       const scoreEl = document.getElementById('score-value');
       const target = Math.max(0, Math.min(100, parseInt(data.score) || 0));
-      let current = 0;
-      const step = Math.max(1, Math.floor(target / 30));
-      const interval = setInterval(() => {
-        current += step;
-        if (current >= target) { current = target; clearInterval(interval); }
-        scoreEl.textContent = current;
-      }, 30);
+      if (parseInt(scoreEl.textContent || '0') !== target) {
+        let current = 0;
+        const step = Math.max(1, Math.floor(target / 30));
+        const interval = setInterval(() => {
+          current += step;
+          if (current >= target) { current = target; clearInterval(interval); }
+          scoreEl.textContent = current;
+        }, 30);
+      }
 
       document.getElementById('score-reason').textContent = data.score_reason || '';
 
