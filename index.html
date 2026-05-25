@@ -2544,30 +2544,40 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
       try {
         const fingerprint = await getFingerprint();
+        const previewBody = JSON.stringify({
+          resume, fingerprint,
+          turnstile_token: turnstileToken,
+          ...(DEV_KEY && { dev_key: DEV_KEY }),
+        });
+        const fullBody = JSON.stringify({
+          resume,
+          ...(DEV_KEY && { dev_key: DEV_KEY }),
+        });
 
-        const res = await fetch('/api/analyze', {
+        // Fire both in parallel
+        const previewFetchP = fetch('/api/analyze', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            resume,
-            fingerprint,
-            turnstile_token: turnstileToken,
-            ...(DEV_KEY && { dev_key: DEV_KEY }),
-          }),
+          body: previewBody,
         });
+        const fullFetchP = fetch('/api/analyze-full', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: fullBody,
+        });
+
+        const res = await previewFetchP;
 
         if (res.status === 429) {
           document.getElementById('loading-state').classList.remove('show');
           document.getElementById('limit-reached-state').classList.add('show');
           return;
         }
-
         if (res.status === 503) {
           document.getElementById('loading-state').classList.remove('show');
           document.getElementById('capacity-state').classList.add('show');
           return;
         }
-
         if (!res.ok) {
           document.getElementById('loading-state').classList.remove('show');
           const errData = await res.json().catch(() => ({}));
@@ -2582,35 +2592,24 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           'Reading your experience...',
           'Scoring your bullets...',
           'Spotting weak points...',
-          'Writing your rewrites...',
-          'Checking market reality...',
-          'Calculating salary gaps...',
-          'Drafting recruiter verdict...',
+          'Drafting recruiter reaction...',
         ];
         let streamMsgIdx = 0;
         const loadingMsgEl = document.getElementById('loading-msg');
         const loadingSubEl = document.getElementById('loading-sub');
-        if (loadingSubEl) loadingSubEl.textContent = 'Usually 15–25 seconds';
+        if (loadingSubEl) loadingSubEl.textContent = 'Usually 4–6 seconds';
         const streamMsgInterval = setInterval(() => {
           streamMsgIdx = (streamMsgIdx + 1) % streamMsgs.length;
           if (loadingMsgEl) loadingMsgEl.textContent = streamMsgs[streamMsgIdx];
-        }, 2800);
+        }, 1500);
 
-        const reader = res.body.getReader();
-        const dec = new TextDecoder();
-        let accumulated = '';
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          accumulated += dec.decode(value, { stream: true });
-        }
-
+        const previewText = await readStreamToText(res);
         clearInterval(streamMsgInterval);
         document.getElementById('loading-state').classList.remove('show');
 
         let data;
         try {
-          const cleaned = accumulated.replace(/```json\s*|\s*```/g, '').trim();
+          const cleaned = previewText.replace(/```json\s*|\s*```/g, '').trim();
           data = JSON.parse(cleaned);
         } catch {
           document.getElementById('form-state').style.display = 'block';
@@ -2621,6 +2620,24 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         }
 
         renderResults(data);
+
+        // Kick off background full-data processing — do NOT await here so preview renders fast.
+        // Subsequent calls (unlockFullAnalysis, openEditor) will await window._fullDataPromise.
+        window._fullDataPromise = (async () => {
+          try {
+            const fullRes = await fullFetchP;
+            if (!fullRes || !fullRes.ok) return null;
+            const fullText = await readStreamToText(fullRes);
+            const cleaned = fullText.replace(/```json\s*|\s*```/g, '').trim();
+            const fullData = JSON.parse(cleaned);
+            Object.assign(analysisData, fullData);
+            try { localStorage.setItem('braggy_analysis', JSON.stringify(analysisData)); } catch {}
+            return fullData;
+          } catch (e) {
+            console.error('full data load failed', e);
+            return null;
+          }
+        })();
       } catch (e) {
         document.getElementById('loading-state').classList.remove('show');
         document.getElementById('form-state').style.display = 'block';
@@ -2628,6 +2645,18 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         btn.textContent = 'Brag me →';
         showError('Network error. Check your connection and try again.');
       }
+    }
+
+    async function readStreamToText(res) {
+      const reader = res.body.getReader();
+      const dec = new TextDecoder();
+      let accumulated = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        accumulated += dec.decode(value, { stream: true });
+      }
+      return accumulated;
     }
 
     function renderResults(data) {
@@ -2798,7 +2827,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         try { localStorage.setItem('braggy_email', email); } catch (e) { /* non-fatal */ }
         window.dataLayer = window.dataLayer || [];
         dataLayer.push({ event: 'email_submitted' });
-        revealLockedContent();
+        await revealLockedContent();
       } catch (e) {
         showUnlockError('Network error. Check your connection and try again.');
         btn.disabled = false;
@@ -2812,7 +2841,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       errEl.classList.add('show');
     }
 
-    function revealLockedContent() {
+    async function revealLockedContent() {
+      const unlockBtn = document.getElementById('unlock-btn');
+      if (window._fullDataPromise) {
+        if (unlockBtn) unlockBtn.textContent = 'Polishing résumé...';
+        try { await window._fullDataPromise; } catch {}
+        window._fullDataPromise = null;
+        if (unlockBtn) unlockBtn.textContent = 'Unlock & download →';
+      }
+
       const data = analysisData || {};
 
       document.getElementById('market-reality-full-text').textContent = data.market_reality_full || '';
@@ -2854,16 +2891,34 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       }
     }
 
-    function openEditor() {
+    async function openEditor() {
       if (!analysisData) return;
+      const btn = document.getElementById('edit-download-btn');
+      if (window._fullDataPromise) {
+        const label = btn?.querySelector('.download-btn-label');
+        const prev = label ? label.textContent : '';
+        if (label) label.textContent = 'Polishing résumé...';
+        if (btn) btn.disabled = true;
+        try { await window._fullDataPromise; } catch {}
+        window._fullDataPromise = null;
+        if (label) label.textContent = prev || 'Edit & Download Resume';
+        if (btn) btn.disabled = false;
+      }
       try { localStorage.setItem('braggy_analysis', JSON.stringify(analysisData)); } catch (e) {}
       window.dataLayer = window.dataLayer || [];
       dataLayer.push({ event: 'editor_opened', score: analysisData.score || 0 });
       window.location.href = '/editor.html';
     }
 
-    function downloadRewrittenResume() {
+    async function downloadRewrittenResume() {
       if (!analysisData) return;
+      if (window._fullDataPromise) {
+        const meta = document.getElementById('download-card-meta');
+        if (meta) { meta.classList.remove('success'); meta.textContent = 'Polishing résumé...'; }
+        try { await window._fullDataPromise; } catch {}
+        window._fullDataPromise = null;
+        if (meta) meta.textContent = '';
+      }
       const btn = document.getElementById('download-btn');
       const meta = document.getElementById('download-card-meta');
 
