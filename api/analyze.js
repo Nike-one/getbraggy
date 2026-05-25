@@ -32,7 +32,7 @@ Your job:
 
 5. MARKET REALITY PARTIAL: One sentence teasing market positioning. Must include a ₹ range. Example: "At current presentation, you're pricing yourself ₹4-6L below your actual market."
 
-6. REWRITES PREVIEW: Pick the SINGLE WEAKEST bullet and rewrite it as a teaser. Just one entry. Same three rules apply: source-grounded only (no invented activities), tilde-prefix for estimates (`~12`), qualitative fallback if no number basis. Under 25 words. No jargon ("leveraged", "spearheaded", "synergized").
+6. REWRITES PREVIEW: Pick the SINGLE WEAKEST bullet and rewrite it as a teaser. Just one entry. Same three rules apply: source-grounded only (no invented activities), tilde-prefix for estimates (\`~12\`), qualitative fallback if no number basis. Under 25 words. No jargon ("leveraged", "spearheaded", "synergized").
 
 Return strictly this JSON and nothing else:
 
