@@ -2782,6 +2782,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       const scoreEl = document.getElementById('score-value');
       if (!scoreEl) return;
       const safe = Math.max(0, Math.min(100, parseInt(target) || 0));
+      scoreEl.dataset.animTarget = String(safe);
       let current = 0;
       const step = Math.max(1, Math.floor(safe / 30));
       const interval = setInterval(() => {
@@ -2834,7 +2835,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
       const scoreEl = document.getElementById('score-value');
       const target = Math.max(0, Math.min(100, parseInt(data.score) || 0));
-      if (parseInt(scoreEl.textContent || '0') !== target) {
+      if (scoreEl.dataset.animTarget !== String(target)) {
         let current = 0;
         const step = Math.max(1, Math.floor(target / 30));
         const interval = setInterval(() => {
@@ -2847,24 +2848,27 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       document.getElementById('score-reason').textContent = data.score_reason || '';
 
       const chipsEl = document.getElementById('profile-chips');
-      chipsEl.innerHTML = '';
-      (data.profile_chips || []).forEach(chip => {
-        const span = document.createElement('span');
-        span.className = 'chip';
-        span.textContent = chip;
-        chipsEl.appendChild(span);
-      });
+      if (!chipsEl.children.length) {
+        (data.profile_chips || []).forEach(chip => {
+          const span = document.createElement('span');
+          span.className = 'chip';
+          span.textContent = chip;
+          chipsEl.appendChild(span);
+        });
+      }
 
-      document.getElementById('recruiter-reaction-text').textContent = data.recruiter_reaction || '';
+      const reactEl = document.getElementById('recruiter-reaction-text');
+      if (!reactEl.textContent) reactEl.textContent = data.recruiter_reaction || '';
 
       const rfList = document.getElementById('red-flags-list');
-      rfList.innerHTML = '';
-      (data.red_flags || []).forEach(flag => {
-        const li = document.createElement('li');
-        li.className = 'red-flag-item';
-        li.textContent = flag;
-        rfList.appendChild(li);
-      });
+      if (!rfList.children.length) {
+        (data.red_flags || []).forEach(flag => {
+          const li = document.createElement('li');
+          li.className = 'red-flag-item';
+          li.textContent = flag;
+          rfList.appendChild(li);
+        });
+      }
 
       document.getElementById('market-partial').textContent = data.market_reality_partial || '';
 
