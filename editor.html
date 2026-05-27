@@ -325,8 +325,32 @@
       try { return localStorage.getItem('braggy_dev_key') || ''; } catch { return ''; }
     })();
 
-    // Must be initialized before bootEditor() runs — renderResumePreview reads it
+    // Must be initialized before bootEditor() runs — renderResumePreview reads it.
+    // Persisted across reloads, keyed by a fingerprint of bullet_issues IDs so
+    // it resets cleanly when a new analysis is loaded.
+    function bulletIssuesFingerprint(issues) {
+      return (issues || []).map(i => i.id).sort().join('|');
+    }
+    const RESOLVED_KEY = 'braggy_resolved';
     const resolved = Object.create(null);
+    (() => {
+      try {
+        const raw = JSON.parse(localStorage.getItem(RESOLVED_KEY) || 'null');
+        const fp = bulletIssuesFingerprint(analysisData && analysisData.bullet_issues);
+        if (raw && raw.fp === fp && raw.data && typeof raw.data === 'object') {
+          Object.assign(resolved, raw.data);
+        } else {
+          localStorage.removeItem(RESOLVED_KEY);
+        }
+      } catch {}
+    })();
+
+    function persistResolved() {
+      try {
+        const fp = bulletIssuesFingerprint(analysisData && analysisData.bullet_issues);
+        localStorage.setItem(RESOLVED_KEY, JSON.stringify({ fp, data: resolved }));
+      } catch {}
+    }
 
     if (!analysisData || !analysisData.rewritten_resume) {
       document.getElementById('editor-body').style.display = 'none';
@@ -341,6 +365,31 @@
       renderResumePreview();
       wireTooltips();
       wireBulletClicks();
+      wireKeyboardShortcuts();
+    }
+
+    function wireKeyboardShortcuts() {
+      // Enter in estimate input → Apply. Cmd/Ctrl+Enter in rewrite textarea → Accept.
+      document.getElementById('issue-list').addEventListener('keydown', (ev) => {
+        const card = ev.target.closest && ev.target.closest('.issue-card');
+        if (!card) return;
+        const id = card.getAttribute('data-issue-id');
+        if (!id) return;
+        if (ev.target.matches('input[data-role="estimate-input"]') && ev.key === 'Enter') {
+          ev.preventDefault();
+          applyIssue(id);
+        } else if (ev.target.matches('textarea[data-role="rewrite-text"]') && ev.key === 'Enter' && (ev.metaKey || ev.ctrlKey)) {
+          ev.preventDefault();
+          acceptRewrite(id);
+        }
+      });
+
+      // Esc closes the email modal when it's open
+      document.addEventListener('keydown', (ev) => {
+        if (ev.key !== 'Escape') return;
+        const modal = document.getElementById('email-modal');
+        if (modal && modal.classList.contains('show')) closeEmailModal();
+      });
     }
 
     // === Stubs that Task 4–9 implement ===
@@ -350,6 +399,16 @@
       const subheadEl = document.getElementById('issues-subhead');
       const listEl = document.getElementById('issue-list');
       const fixAllBtn = document.getElementById('fix-all-btn');
+
+      // Skip cards the user already resolved in a prior session
+      const pending = issues.filter(i => !resolved[i.id]);
+
+      if (issues.length > 0 && pending.length === 0) {
+        // Everything already resolved on a prior visit — boot straight to done state
+        listEl.innerHTML = '';
+        showAllDone();
+        return;
+      }
 
       if (issues.length === 0) {
         headerEl.textContent = 'Your resume looks strong';
@@ -361,11 +420,11 @@
         return;
       }
 
-      headerEl.textContent = `${issues.length} ${issues.length === 1 ? 'issue' : 'issues'} to fix`;
+      headerEl.textContent = `${pending.length} ${pending.length === 1 ? 'issue' : 'issues'} to fix`;
       subheadEl.textContent = 'Answer the question or accept the rewrite. Hit Fix All when done.';
 
       listEl.innerHTML = '';
-      issues.forEach((issue, idx) => {
+      pending.forEach((issue, idx) => {
         const card = document.createElement('div');
         card.className = 'issue-card';
         card.setAttribute('data-issue-id', issue.id);
@@ -374,7 +433,7 @@
         const statusHtml = `
           <div class="issue-card-status">
             <span class="dot"></span>
-            <span class="label">${idx + 1} of ${issues.length}</span>
+            <span class="label">${idx + 1} of ${pending.length}</span>
           </div>`;
 
         const bulletHtml = `<div class="issue-card-bullet">${escapeHtml(issue.original_text || '')}</div>`;
@@ -462,6 +521,15 @@
       document.getElementById('issues-header').textContent = '';
       document.getElementById('issues-subhead').textContent = '';
       document.getElementById('all-done-state').style.display = 'flex';
+
+      // Mobile (<900px): single-column layout puts left pane above resume.
+      // After done, user is stuck at the top — pull them down to the updated resume.
+      if (window.matchMedia('(max-width: 900px)').matches) {
+        setTimeout(() => {
+          const paper = document.getElementById('resume-paper');
+          if (paper) paper.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 120);
+      }
     }
 
     function commitBullet(issue, text) {
@@ -479,13 +547,15 @@
       const card = document.querySelector(`.issue-card[data-issue-id="${cssEscape(id)}"]`);
       if (!card) return;
       const input = card.querySelector('input[data-role="estimate-input"]');
-      const value = (input?.value || '').trim();
+      if (!input) return;
+      const value = input.value.trim();
       if (!value) {
         input.focus();
         input.style.borderColor = 'var(--accent)';
         return;
       }
       resolved[id] = { answer: value };
+      persistResolved();
       markCardResolved(id);
       const issue = (analysisData.bullet_issues || []).find(i => i.id === id);
       if (issue) {
@@ -499,12 +569,14 @@
       const card = document.querySelector(`.issue-card[data-issue-id="${cssEscape(id)}"]`);
       if (!card) return;
       const ta = card.querySelector('textarea[data-role="rewrite-text"]');
-      const value = (ta?.value || '').trim();
+      if (!ta) return;
+      const value = ta.value.trim();
       if (!value) {
         ta.focus();
         return;
       }
       resolved[id] = { answer: value };
+      persistResolved();
       markCardResolved(id);
       const issue = (analysisData.bullet_issues || []).find(i => i.id === id);
       if (issue) commitBullet(issue, value);
@@ -512,6 +584,7 @@
 
     function skipIssue(id) {
       resolved[id] = { skipped: true };
+      persistResolved();
       markCardResolved(id);
     }
 
@@ -535,11 +608,18 @@
       function bulletEl(text, section, entryIdx, bulletIdx) {
         const key = `${section}|${entryIdx}|${bulletIdx}`;
         const issue = issueIndex[key];
-        if (issue) {
-          const isResolved = resolved[issue.id] && !resolved[issue.id].skipped;
-          return `<li class="issue-bullet${isResolved ? ' resolved' : ''}" data-issue-id="${escapeHtml(issue.id)}">${escapeHtml(text)}</li>`;
+        if (!issue) return `<li>${escapeHtml(text)}</li>`;
+        const r = resolved[issue.id];
+        if (!r) {
+          // Still pending — orange underline, clickable to focus the card
+          return `<li class="issue-bullet" data-issue-id="${escapeHtml(issue.id)}">${escapeHtml(text)}</li>`;
         }
-        return `<li>${escapeHtml(text)}</li>`;
+        if (r.skipped) {
+          // User dismissed — render as plain bullet, no click affordance
+          return `<li>${escapeHtml(text)}</li>`;
+        }
+        // Applied — green underline, no click affordance (card has been removed)
+        return `<li class="issue-bullet resolved">${escapeHtml(text)}</li>`;
       }
 
       const parts = [];
@@ -910,9 +990,15 @@
       }
 
       const headerBtn = document.getElementById('header-download-btn');
+      const allDoneCta = document.querySelector('.all-done-cta');
       headerBtn.disabled = true;
       const prevLabel = headerBtn.textContent;
       headerBtn.textContent = 'Preparing PDF…';
+      const prevAllDone = allDoneCta ? allDoneCta.textContent : null;
+      if (allDoneCta) {
+        allDoneCta.disabled = true;
+        allDoneCta.textContent = 'Preparing PDF…';
+      }
 
       const clean = (text) => {
         if (text === null || text === undefined) return '';
@@ -1118,6 +1204,10 @@
 
         headerBtn.disabled = false;
         headerBtn.textContent = 'Download again';
+        if (allDoneCta) {
+          allDoneCta.disabled = false;
+          allDoneCta.textContent = 'Downloaded ✓';
+        }
 
         window.dataLayer = window.dataLayer || [];
         dataLayer.push({ event: 'editor_resume_downloaded', score: analysisData.score || 0 });
@@ -1125,6 +1215,10 @@
         console.error('pdf generation failed', e);
         headerBtn.disabled = false;
         headerBtn.textContent = prevLabel;
+        if (allDoneCta && prevAllDone !== null) {
+          allDoneCta.disabled = false;
+          allDoneCta.textContent = prevAllDone;
+        }
         alert('Could not generate PDF. Refresh the page and try again.');
       }
     }
