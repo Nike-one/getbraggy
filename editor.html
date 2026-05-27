@@ -433,7 +433,7 @@
       const issue = (analysisData.bullet_issues || []).find(i => i.id === id);
       if (issue) {
         const fmt = /^\d+(\.\d+)?[KkMmBb%]?$/.test(value) ? `~${value}` : value;
-        const text = (issue.rewritten_template || issue.original_text).replace('{placeholder}', fmt);
+        const text = (issue.rewritten_template || issue.original_text).replace(/\{[^}]+\}/, fmt);
         commitBullet(issue, text);
       }
     }
