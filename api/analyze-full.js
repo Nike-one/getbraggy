@@ -142,7 +142,7 @@ export default async function handler(req) {
         'anthropic-beta': 'prompt-caching-2024-07-31',
       },
       body: JSON.stringify({
-        model: 'claude-opus-4-7',
+        model: 'claude-sonnet-4-6',
         max_tokens: 6000,
         stream: true,
         system: [
