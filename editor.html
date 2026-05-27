@@ -160,6 +160,7 @@
     }
     .all-done-title { font-size: 1.05rem; font-weight: 600; color: var(--text); }
     .all-done-sub { font-size: 0.85rem; color: var(--text-muted); }
+    .all-done-cta { margin-top: 0.75rem; padding: 0.75rem 1.4rem; font-size: 0.85rem; }
 
     /* Right pane — resume preview */
     .resume-paper {
@@ -273,11 +274,11 @@
         <div class="issues-header" id="issues-header">Loading…</div>
         <div class="issues-subhead" id="issues-subhead">Reading your analysis…</div>
         <div id="issue-list"></div>
-        <div id="all-done-state" class="all-done-state" style="display:none;">
-          <div class="all-done-icon">✓</div>
+        <div id="all-done-state" class="all-done-state" style="display:none;" role="status" aria-live="polite">
+          <div class="all-done-icon" aria-hidden="true">✓</div>
           <div class="all-done-title">Resume updated</div>
           <div class="all-done-sub">Ready to download</div>
-          <button class="header-btn primary" style="margin-top:0.4rem;" onclick="onDownloadClick()">Download PDF →</button>
+          <button class="header-btn primary all-done-cta" onclick="onDownloadClick()">Download PDF →</button>
         </div>
         <div class="fix-all-bar">
           <button class="fix-all-btn" id="fix-all-btn" onclick="fixAll()" disabled>Fix All in One Go</button>
@@ -452,7 +453,10 @@
       if (remaining.length === 0) showAllDone();
     }
 
+    let allDoneShown = false;
     function showAllDone() {
+      if (allDoneShown) return;
+      allDoneShown = true;
       document.getElementById('issue-list').style.display = 'none';
       document.querySelector('.fix-all-bar').style.display = 'none';
       document.getElementById('issues-header').textContent = '';
