@@ -69,12 +69,13 @@ export default async function handler(req) {
 
 Rules:
 - Under 20 words per bullet
-- Start with a strong action verb
+- Start with a strong, plain action verb — vary verbs across bullets
 - Use ONLY information from the original bullet or the user_answer — do not invent facts, companies, or activities
 - For "estimate_needed": take the template, replace the {placeholder} token with the user_answer naturally (e.g. if user said "12", write "~12" if it's a count)
 - For "weak_rewrite": use the user_answer as the new bullet text; polish grammar and punch only — do not add new facts
 - Numbers: use tilde prefix ~N for approximations the user provided (e.g. ~12, ~500K)
-- No adjectives without proof, no fluff
+- Human voice: no "streamlined", "optimized", "leveraged", "spearheaded", "synergized", "facilitated". Use "Cut" not "Reduced". "Ran" not "Managed". "Shipped" not "Delivered".
+- Fragments OK. No over-explaining. Trust the reader.
 
 Return ONLY valid JSON with this exact shape — no markdown, no preamble:
 {"bullets":[{"id":"<id>","rewritten":"<final bullet text>"}]}
@@ -91,7 +92,7 @@ ${bulletDescriptions}`;
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
+        model: 'claude-opus-4-7',
         max_tokens: 512,
         messages: [{ role: 'user', content: prompt }],
       }),

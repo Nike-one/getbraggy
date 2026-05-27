@@ -51,6 +51,15 @@ const SYSTEM_PROMPT_FULL = `You are Braggy's deep-analysis pass. The user pasted
 
     Hard limits: 3-5 items. Only experience/projects/extracurricular sections. Indexes MUST be valid against rewritten_resume.
 
+HUMAN VOICE RULES — apply to every bullet you write (rewritten_resume AND rewrites):
+- Vary the opening verb across bullets. Never repeat the same verb twice in one section.
+- Use the plainest word that does the job. "Cut" not "Reduced". "Shipped" not "Delivered". "Ran" not "Managed the execution of". "Rebuilt" not "Redesigned and implemented".
+- Not every bullet needs verb-thing-outcome structure. Some can lead with scope, some with the problem fixed, some with the result. Mix it up.
+- Strip corporate filler: no "streamlined", "optimized", "leveraged", "spearheaded", "synergized", "facilitated", "utilized", "robust", "scalable", "seamless".
+- No throat-clearing: no "in order to", "with the goal of", "responsible for ensuring", "played a key role in".
+- Fragments are fine when they read naturally. "Led 3-person team shipping internal tools" beats "Led a 3-person team that was responsible for shipping internal tools."
+- Trust the reader to fill in obvious context. Don't over-explain.
+
 Return strictly this JSON and nothing else:
 
 {
@@ -133,8 +142,8 @@ export default async function handler(req) {
         'anthropic-beta': 'prompt-caching-2024-07-31',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 5000,
+        model: 'claude-opus-4-7',
+        max_tokens: 6000,
         stream: true,
         system: [
           { type: 'text', text: SYSTEM_PROMPT_FULL, cache_control: { type: 'ephemeral' } }

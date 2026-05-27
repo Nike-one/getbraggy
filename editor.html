@@ -148,6 +148,19 @@
     }
     .fix-all-success.show { display: block; }
 
+    .all-done-state {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; padding: 3rem 1.5rem; gap: 0.85rem;
+    }
+    .all-done-icon {
+      width: 56px; height: 56px; border-radius: 50%;
+      background: var(--green-soft); border: 2px solid var(--green);
+      color: var(--green); font-size: 1.5rem; font-weight: 600;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .all-done-title { font-size: 1.05rem; font-weight: 600; color: var(--text); }
+    .all-done-sub { font-size: 0.85rem; color: var(--text-muted); }
+
     /* Right pane — resume preview */
     .resume-paper {
       background: #ffffff; color: #000000;
@@ -260,6 +273,12 @@
         <div class="issues-header" id="issues-header">Loading…</div>
         <div class="issues-subhead" id="issues-subhead">Reading your analysis…</div>
         <div id="issue-list"></div>
+        <div id="all-done-state" class="all-done-state" style="display:none;">
+          <div class="all-done-icon">✓</div>
+          <div class="all-done-title">Resume updated</div>
+          <div class="all-done-sub">Ready to download</div>
+          <button class="header-btn primary" style="margin-top:0.4rem;" onclick="onDownloadClick()">Download PDF →</button>
+        </div>
         <div class="fix-all-bar">
           <button class="fix-all-btn" id="fix-all-btn" onclick="fixAll()" disabled>Fix All in One Go</button>
           <div class="fix-all-success" id="fix-all-success">Resume updated — ready to download</div>
@@ -398,13 +417,47 @@
 
     function markCardResolved(id) {
       const card = document.querySelector(`.issue-card[data-issue-id="${cssEscape(id)}"]`);
-      if (card) {
+      if (card && !card.classList.contains('resolved')) {
         card.classList.add('resolved');
         const label = card.querySelector('.issue-card-status .label');
         if (label) label.textContent = 'resolved';
+        setTimeout(() => removeCard(card), 350);
       }
       const bullet = document.querySelector(`.issue-bullet[data-issue-id="${cssEscape(id)}"]`);
       if (bullet) bullet.classList.add('resolved');
+    }
+
+    function removeCard(card) {
+      if (!card.parentNode) return;
+      const h = card.offsetHeight;
+      card.style.overflow = 'hidden';
+      card.style.maxHeight = h + 'px';
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        card.style.transition = 'opacity 0.2s ease, transform 0.2s ease, max-height 0.3s ease 0.12s, margin-bottom 0.3s ease 0.12s, padding-top 0.3s ease 0.12s, padding-bottom 0.3s ease 0.12s';
+        card.style.opacity = '0';
+        card.style.transform = 'translateX(-10px)';
+        card.style.maxHeight = '0';
+        card.style.marginBottom = '0';
+        card.style.paddingTop = '0';
+        card.style.paddingBottom = '0';
+      }));
+      setTimeout(() => {
+        card.remove();
+        checkAllResolved();
+      }, 650);
+    }
+
+    function checkAllResolved() {
+      const remaining = document.querySelectorAll('#issue-list .issue-card');
+      if (remaining.length === 0) showAllDone();
+    }
+
+    function showAllDone() {
+      document.getElementById('issue-list').style.display = 'none';
+      document.querySelector('.fix-all-bar').style.display = 'none';
+      document.getElementById('issues-header').textContent = '';
+      document.getElementById('issues-subhead').textContent = '';
+      document.getElementById('all-done-state').style.display = 'flex';
     }
 
     function commitBullet(issue, text) {
@@ -695,10 +748,9 @@
         }));
 
       if (payload.length === 0) {
-        // Nothing to send — just re-render with skipped issues marked
-        Object.keys(resolved).forEach(markCardResolved);
         renderResumePreview();
-        document.getElementById('fix-all-success').classList.add('show');
+        document.getElementById('issue-list').innerHTML = '';
+        showAllDone();
         return;
       }
 
@@ -742,18 +794,14 @@
 
         try { localStorage.setItem('braggy_analysis', JSON.stringify(analysisData)); } catch (e) {}
 
-        Object.keys(resolved).forEach(markCardResolved);
         renderResumePreview();
-
-        const successEl = document.getElementById('fix-all-success');
-        successEl.classList.add('show');
+        document.getElementById('issue-list').innerHTML = '';
         document.getElementById('pane-right').scrollTo({ top: 0, behavior: 'smooth' });
 
         window.dataLayer = window.dataLayer || [];
         dataLayer.push({ event: 'editor_fix_all', resolved_count: payload.length });
 
-        btn.disabled = false;
-        btn.textContent = prevLabel;
+        showAllDone();
       } catch (e) {
         btn.disabled = false;
         btn.textContent = prevLabel;
