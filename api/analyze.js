@@ -179,8 +179,12 @@ export default async function handler(req) {
       if (abuseRes.ok) {
         const stats = await abuseRes.json();
 
-        // Daily cap — auto-pause if platform hits limit
-        if (stats.total_today >= DAILY_CAP) {
+        // Daily cap — auto-pause if platform hits limit.
+        // Skippable when the user has claimed a share-to-skip bypass (frontend posts
+        // `share_bypass: true` after they click a share button on the capacity screen).
+        // Per-fingerprint and per-IP rate limits below still apply, so a single
+        // bypass-claim cannot be exploited for repeated analyses.
+        if (stats.total_today >= DAILY_CAP && !body.share_bypass) {
           return new Response(
             JSON.stringify({
               error: 'capacity',
