@@ -77,6 +77,16 @@ export default async function handler(req) {
     if (b.rewritten_template) lines.push(`   template: "${b.rewritten_template}"`);
     if (b.suggested_rewrite) lines.push(`   suggested_rewrite: "${b.suggested_rewrite}"`);
     if (b.context) lines.push(`   context: "${b.context}"`);
+    // Entry context — lets the model match the role's domain language and avoid
+    // repeating verbs already used by sibling bullets in the same entry.
+    if (b.entry_context && typeof b.entry_context === 'object') {
+      const ec = b.entry_context;
+      if (ec.title) lines.push(`   entry: "${String(ec.title).slice(0, 120)}" (${ec.section || 'experience'} section)`);
+      if (Array.isArray(ec.sibling_bullets) && ec.sibling_bullets.length) {
+        lines.push(`   other bullets in this entry:`);
+        ec.sibling_bullets.slice(0, 6).forEach(s => lines.push(`     - "${String(s).slice(0, 160)}"`));
+      }
+    }
     return lines.join('\n');
   }).join('\n\n');
 
@@ -93,9 +103,11 @@ Rules:
 - Human voice: no "streamlined", "optimized", "leveraged", "spearheaded", "synergized", "facilitated". Use "Cut" not "Reduced". "Ran" not "Managed". "Shipped" not "Delivered".
 - Fragments OK. No over-explaining. Trust the reader.
 - NEVER output curly-brace tokens. No \`{placeholder}\`, \`{count}\`, \`{student_count}\` or any \`{...}\` in the rewritten text. If you lack a value for a template slot, write the bullet without it (qualitative version) instead of leaving the token.
+- When "entry" / "other bullets" context is given: match that role's domain language, and do NOT start your rewrite with a verb any sibling bullet already starts with.
+- "why": one plain sentence, max 12 words, telling the user what got stronger — e.g. "Leads with the result instead of the task." Coaching voice, no jargon, never mention these rules.
 
 Return ONLY valid JSON with this exact shape — no markdown, no preamble:
-{"bullets":[{"id":"<id>","rewritten":"<final bullet text>"}]}
+{"bullets":[{"id":"<id>","rewritten":"<final bullet text>","why":"<what got stronger>"}]}
 
 Bullets to rewrite:
 ${bulletDescriptions}`;
@@ -110,7 +122,7 @@ ${bulletDescriptions}`;
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 512,
+        max_tokens: 800,
         messages: [{ role: 'user', content: prompt }],
       }),
     });

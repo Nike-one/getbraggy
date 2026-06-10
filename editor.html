@@ -53,6 +53,47 @@
     }
     .editor-logo em { color: var(--accent); font-style: normal; }
     .editor-header-actions { display: flex; gap: 0.6rem; align-items: center; }
+
+    /* Strength meter — base score from analysis, climbs as fixes land */
+    .strength-pill {
+      display: none; align-items: center; gap: 0.45rem;
+      font-family: 'JetBrains Mono', monospace; font-size: 0.8rem;
+      padding: 0.4rem 0.85rem; border-radius: 999px;
+      border: 1px solid var(--border-strong); color: var(--text-secondary);
+      white-space: nowrap;
+    }
+    .strength-pill.show { display: inline-flex; }
+    .strength-pill .strength-now { color: var(--green, #4ade80); font-weight: 600; font-size: 0.9rem; }
+    .strength-pill .strength-arrow { color: var(--text-muted); }
+    .strength-pill.bump .strength-now { animation: strength-bump 0.45s ease; }
+    @keyframes strength-bump {
+      0% { transform: scale(1); }
+      40% { transform: scale(1.35); }
+      100% { transform: scale(1); }
+    }
+    @media (max-width: 520px) {
+      .strength-pill { font-size: 0.72rem; padding: 0.3rem 0.6rem; }
+      .strength-pill .strength-label { display: none; }
+    }
+
+    /* Win state — card morphs into before/after + why after a fix lands */
+    .issue-card.win { border-color: var(--green, #4ade80); }
+    .win-before {
+      font-size: 0.84rem; color: var(--text-muted);
+      text-decoration: line-through; text-decoration-color: rgba(239,68,68,0.6);
+      margin-bottom: 0.45rem; line-height: 1.45;
+    }
+    .win-after {
+      font-size: 0.92rem; color: var(--text); line-height: 1.5;
+      padding: 0.5rem 0.7rem; border-radius: 8px;
+      background: var(--green-soft, rgba(74,222,128,0.08));
+      border: 1px solid var(--green, #4ade80);
+      margin-bottom: 0.45rem;
+    }
+    .win-why {
+      font-size: 0.8rem; color: var(--text-secondary); font-style: italic;
+    }
+    .win-why::before { content: '→ '; color: var(--green, #4ade80); font-style: normal; }
     .header-btn {
       font-family: 'JetBrains Mono', monospace; font-size: 0.78rem;
       padding: 0.55rem 1rem; border-radius: 8px; cursor: pointer;
@@ -269,6 +310,12 @@
   <div class="editor-shell">
     <header class="editor-header">
       <a href="/" class="editor-logo">Brag<em>gy</em></a>
+      <div class="strength-pill" id="strength-pill" role="status" aria-live="polite" title="Estimated resume strength — climbs as you fix flagged bullets">
+        <span class="strength-label">Strength</span>
+        <span id="strength-base"></span>
+        <span class="strength-arrow">→</span>
+        <span class="strength-now" id="strength-now"></span>
+      </div>
       <div class="editor-header-actions">
         <a href="/" class="header-btn">← Back</a>
         <button class="header-btn primary" id="header-download-btn" onclick="onDownloadClick()">Download PDF</button>
@@ -424,6 +471,43 @@
       } catch {}
     }
 
+    // === Strength meter ===
+    // Base = the analysis score the user saw on the home page. Each resolved
+    // issue adds points (worst-first issues are worth more — same ranking the
+    // API returns). Manual bullet rewrites add a little. Capped at 98: a tool
+    // that hands out 100s stops being believable.
+    const BASE_SCORE = Number(analysisData && analysisData.score);
+    const ISSUE_POINTS = [4, 4, 3, 3, 2];
+    function strengthBoost() {
+      let boost = 0;
+      const issues = Array.isArray(analysisData && analysisData.bullet_issues) ? analysisData.bullet_issues : [];
+      issues.forEach((iss, idx) => {
+        const r = resolved[iss.id];
+        if (r && !r.skipped) boost += ISSUE_POINTS[idx] !== undefined ? ISSUE_POINTS[idx] : 2;
+      });
+      // Manual (click-to-edit) rewrites: +1 each, capped so spam-editing can't inflate
+      const manual = Object.keys(resolved).filter(k => k.startsWith('ur:')).length;
+      boost += Math.min(manual, 3);
+      return boost;
+    }
+    function currentStrength() {
+      return Math.min(Math.round(BASE_SCORE) + strengthBoost(), 98);
+    }
+    function updateStrength(bump) {
+      if (!Number.isFinite(BASE_SCORE)) return;
+      const pill = document.getElementById('strength-pill');
+      if (!pill) return;
+      document.getElementById('strength-base').textContent = Math.round(BASE_SCORE);
+      const nowEl = document.getElementById('strength-now');
+      nowEl.textContent = currentStrength();
+      pill.classList.add('show');
+      if (bump) {
+        pill.classList.remove('bump');
+        void pill.offsetWidth; // restart animation
+        pill.classList.add('bump');
+      }
+    }
+
     if (!analysisData || !analysisData.rewritten_resume) {
       document.getElementById('editor-body').style.display = 'none';
       document.getElementById('editor-empty').style.display = 'flex';
@@ -438,6 +522,7 @@
       wireTooltips();
       wireBulletClicks();
       wireKeyboardShortcuts();
+      updateStrength(false);
     }
 
     function wireKeyboardShortcuts() {
@@ -498,7 +583,7 @@
       }
 
       headerEl.textContent = `${pending.length} ${pending.length === 1 ? 'issue' : 'issues'} to fix`;
-      subheadEl.textContent = 'Answer the question or accept the rewrite. Hit Fix All when done.';
+      subheadEl.textContent = 'Each fix bumps your score. Answer the question or accept the rewrite.';
 
       listEl.innerHTML = '';
       pending.forEach((issue, idx) => {
@@ -561,6 +646,28 @@
       if (bullet) bullet.classList.add('resolved');
     }
 
+    // The payoff moment: instead of silently vanishing, the card morphs into a
+    // before/after view with a one-line "why this is stronger", lingers long
+    // enough to read, then slides away. This is where the user actually SEES
+    // the value of the fix.
+    function winMorphCard(card, before, after, why) {
+      if (!card) return;
+      card.classList.add('win');
+      card.innerHTML = `
+        <div class="issue-card-status"><span class="dot"></span><span class="label">fixed ✓</span></div>
+        <div class="win-before">${escapeHtml(before || '')}</div>
+        <div class="win-after">${escapeHtml(after || '')}</div>
+        ${why ? `<div class="win-why">${escapeHtml(why)}</div>` : ''}`;
+      setTimeout(() => removeCard(card), 4200);
+    }
+
+    function resolveCardWithWin(id, before, after, why) {
+      const bullet = document.querySelector(`.issue-bullet[data-issue-id="${cssEscape(id)}"]`);
+      if (bullet) bullet.classList.add('resolved');
+      updateStrength(true);
+      winMorphCard(document.querySelector(`.issue-card[data-issue-id="${cssEscape(id)}"]`), before, after, why);
+    }
+
     function removeCard(card) {
       if (!card.parentNode) return;
       const h = card.offsetHeight;
@@ -596,6 +703,12 @@
       document.getElementById('issues-header').textContent = '';
       document.getElementById('issues-subhead').textContent = '';
       if (allDoneEl) allDoneEl.style.display = 'flex';
+
+      // Score payoff — the reason the fixes were worth doing.
+      const subEl = allDoneEl && allDoneEl.querySelector('.all-done-sub');
+      if (subEl && Number.isFinite(BASE_SCORE) && currentStrength() > Math.round(BASE_SCORE)) {
+        subEl.textContent = `Score ${Math.round(BASE_SCORE)} → ${currentStrength()} · Ready to download`;
+      }
 
       // Mobile (<900px): single-column layout puts left pane above resume.
       // After done, user is stuck at the top — pull them down to the updated resume.
@@ -673,7 +786,6 @@
 
       resolved[id] = { answer: value };
       persistResolved();
-      markCardResolved(id);
       const issue = (analysisData.bullet_issues || []).find(i => i.id === id);
       if (issue) {
         // Honor user intent: `+` = lower bound (no ~), bare number = approximation (add ~).
@@ -683,6 +795,10 @@
         const fmt = (hasPlus || hasTilde) ? value : `~${value}`;
         const text = (issue.rewritten_template || issue.original_text).replace(/~?\{[^}]+\}/, fmt);
         commitBullet(issue, text);
+        resolveCardWithWin(id, issue.original_text, scrubPlaceholderTokens(text),
+          issue.context || 'A counted claim reads as fact — vague scope reads as filler.');
+      } else {
+        markCardResolved(id);
       }
     }
 
@@ -695,9 +811,14 @@
       if (!value) { ta.focus(); return; }
       resolved[id] = { answer: value };
       persistResolved();
-      markCardResolved(id);
       const issue = (analysisData.bullet_issues || []).find(i => i.id === id);
-      if (issue) commitBullet(issue, value);
+      if (issue) {
+        commitBullet(issue, value);
+        resolveCardWithWin(id, issue.original_text, value,
+          issue.context || 'Leads with action and outcome instead of listing the task.');
+      } else {
+        markCardResolved(id);
+      }
     }
 
     function skipIssue(id) {
@@ -794,6 +915,15 @@
       const errPrev = card.querySelector('.issue-card-error');
       if (errPrev) errPrev.remove();
 
+      // Entry context — role/company + sibling bullets, so the model can match the
+      // domain's language and avoid repeating an opening verb already used nearby.
+      const entry = (analysisData.rewritten_resume?.[section] || [])[entryIdx] || {};
+      const entryTitle = (section === 'projects'
+        ? [entry.name, entry.tech]
+        : [entry.role, entry.company || entry.organization]
+      ).filter(Boolean).join(' — ');
+      const siblings = (entry.bullets || []).filter((_, i) => i !== bulletIdx).slice(0, 6);
+
       try {
         const res = await fetch('/api/rewrite-bullets', {
           method: 'POST',
@@ -806,6 +936,7 @@
               user_answer: instruction,
               context: '',
               suggested_rewrite: '',
+              entry_context: { section, title: entryTitle, sibling_bullets: siblings },
             }],
             ...(AUTH_TOKEN && { auth_token: AUTH_TOKEN }),
             ...(DEV_KEY && { dev_key: DEV_KEY }),
@@ -816,7 +947,7 @@
         const rewritten = data.bullets?.[0]?.rewritten;
         if (!res.ok || !rewritten) throw new Error(data.message || data.error || 'AI error. Try again.');
 
-        showUserRewriteSuggestion(bulletKey, instruction, rewritten);
+        showUserRewriteSuggestion(bulletKey, instruction, rewritten, data.bullets?.[0]?.why || '');
       } catch (e) {
         if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Rewrite'; }
         const errEl = document.createElement('div');
@@ -827,11 +958,12 @@
       }
     }
 
-    function showUserRewriteSuggestion(bulletKey, lastInstruction, suggestedText) {
+    function showUserRewriteSuggestion(bulletKey, lastInstruction, suggestedText, why) {
       const card = document.querySelector(`.issue-card[data-user-rewrite-key="${cssEscape(bulletKey)}"]`);
       if (!card) return;
       const { section, entryIdx, bulletIdx } = parseBulletKey(bulletKey);
       const original = getBulletAt(section, entryIdx, bulletIdx);
+      card.setAttribute('data-why', why || '');
 
       card.innerHTML = `
         <div class="issue-card-context">Current bullet</div>
@@ -840,6 +972,7 @@
         <div class="issue-card-question" style="color:var(--text-muted); margin-bottom:0.6rem;">${escapeHtml(lastInstruction)}</div>
         <div class="issue-card-question">Suggested rewrite</div>
         <textarea class="issue-textarea" data-role="user-rewrite-suggested">${escapeHtml(suggestedText)}</textarea>
+        ${why ? `<div class="win-why" style="margin-bottom:0.6rem;">${escapeHtml(why)}</div>` : ''}
         <div class="issue-card-actions">
           <button class="issue-btn accent" data-role="accept">Accept</button>
           <button class="issue-btn" data-role="redo">Rewrite again</button>
@@ -858,6 +991,7 @@
       const finalText = ta.value.trim();
       if (!finalText) { ta.focus(); return; }
       const { section, entryIdx, bulletIdx } = parseBulletKey(bulletKey);
+      const before = getBulletAt(section, entryIdx, bulletIdx);
       const ok = commitBullet({ section, entry_index: entryIdx, bullet_index: bulletIdx }, finalText);
       if (!ok) {
         const errEl = document.createElement('div');
@@ -867,7 +1001,11 @@
         card.querySelector('.issue-card-actions').after(errEl);
         return;
       }
-      closeUserRewriteCard(bulletKey);
+      // Count toward the strength meter (capped in strengthBoost) and show the win.
+      resolved['ur:' + bulletKey] = { userRewrite: true };
+      persistResolved();
+      updateStrength(true);
+      winMorphCard(card, before, finalText, card.getAttribute('data-why') || '');
     }
 
     function redoUserRewrite(bulletKey, previousInstruction) {
