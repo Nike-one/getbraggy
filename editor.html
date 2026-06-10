@@ -334,6 +334,21 @@
         .replace(/\s+([,.)])/g, '$1')
         .trim();
     }
+    // A project "link" that's really the candidate's profile URL (github.com/<user>,
+    // linkedin.com/in/<user>) misleads recruiters expecting the repo — and the profile
+    // already appears in the contact line. Drop it; keep only real project URLs.
+    function cleanProjectLink(link, contact) {
+      if (!link || typeof link !== 'string') return '';
+      const norm = (u) => String(u).toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/+$/, '');
+      const l = norm(link);
+      if (contact) {
+        if (contact.github && l === norm(contact.github)) return '';
+        if (contact.linkedin && l === norm(contact.linkedin)) return '';
+      }
+      if (/^github\.com\/[^/]+$/.test(l)) return '';        // bare profile, no repo path
+      if (/^linkedin\.com\/in\/[^/]+$/.test(l)) return '';
+      return link;
+    }
     function scrubResume(r) {
       if (!r) return r;
       ['experience', 'projects', 'extracurricular'].forEach(section => {
@@ -344,6 +359,9 @@
           }
         });
       });
+      if (Array.isArray(r.projects)) {
+        r.projects.forEach(p => { if (p) p.link = cleanProjectLink(p.link, r.contact); });
+      }
       return r;
     }
     if (analysisData?.rewritten_resume) scrubResume(analysisData.rewritten_resume);

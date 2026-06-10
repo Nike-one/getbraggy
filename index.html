@@ -2641,6 +2641,22 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       return out;
     }
 
+    // A project "link" that's really the candidate's profile URL (github.com/<user>,
+    // linkedin.com/in/<user>) misleads recruiters expecting the repo — and the profile
+    // already appears in the contact line. Drop it; keep only real project URLs.
+    function cleanProjectLink(link, contact) {
+      if (!link || typeof link !== 'string') return '';
+      const norm = (u) => String(u).toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/+$/, '');
+      const l = norm(link);
+      if (contact) {
+        if (contact.github && l === norm(contact.github)) return '';
+        if (contact.linkedin && l === norm(contact.linkedin)) return '';
+      }
+      if (/^github\.com\/[^/]+$/.test(l)) return '';        // bare profile, no repo path
+      if (/^linkedin\.com\/in\/[^/]+$/.test(l)) return '';
+      return link;
+    }
+
     // jsPDF on-demand loader. Not in <head> — it's only needed at download click,
     // and shipping it upfront costs every mobile visitor ~120KB gz on first paint.
     // warmJsPDF() is called when results render, so by the time the user reaches
@@ -3422,7 +3438,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           sectionTitle('Projects');
           r.projects.forEach((p, idx) => {
             const projectTitle = p.tech ? `${p.name} | ${p.tech}` : p.name || '';
-            entryHeader(projectTitle, p.link || '');
+            entryHeader(projectTitle, cleanProjectLink(p.link, r.contact));
             (p.bullets || []).forEach(b => bulletLine(b));
             if (idx < r.projects.length - 1) y += 1.5;
           });

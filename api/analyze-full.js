@@ -38,6 +38,7 @@ const SYSTEM_PROMPT_FULL = `You are Braggy's deep-analysis pass. The user pasted
     - For Skills, regroup into Jake's-Resume-style categories: Languages, Frameworks, Developer Tools, Libraries, Databases, Cloud. Use only categories that apply. Keep the user's actual skills — don't add new ones.
     - Plain ASCII throughout. "Resume" not "Résumé". No ₹ symbol. No em-dashes (use hyphens).
     - Each slot is OPTIONAL — leave as empty array if no data. Do not invent a section just to fill it.
+    - projects[].link: include ONLY a URL that appears next to that specific project in the original résumé. NEVER fill it with the candidate's profile-level GitHub or LinkedIn URL — those already appear in contact, and a profile link next to a project misleads recruiters into expecting the repo. No project-specific URL = empty string.
     - NEVER use placeholder syntax in rewritten_resume bullets. No \`{anything}\`, no \`{count}\`, no \`{number}\`, no \`~{x}\`. Curly braces are reserved for rewritten_template inside bullet_issues only. If you don't have a real number, write the qualitative version instead.
 
 8. BULLET ISSUES: Identify 3-5 bullets in rewritten_resume still weak after your rewrite. Each entry tells the editor which bullet to flag. NEVER more than 5. Rank worst-first. Empty array if fewer than 3 weak bullets.
