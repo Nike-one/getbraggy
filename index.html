@@ -2709,24 +2709,32 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           ...(shareBypass && { share_bypass: true }),
           ...(DEV_KEY && { dev_key: DEV_KEY }),
         });
-        const fullBody = JSON.stringify({
-          resume,
-          ...(DEV_KEY && { dev_key: DEV_KEY }),
-        });
-
-        // Fire both in parallel
-        const previewFetchP = fetch('/api/analyze', {
+        // Fire the preview call first. Its response headers carry X-Braggy-Token
+        // (issued only after the abuse checks pass), which /api/analyze-full and
+        // /api/rewrite-bullets now require. Headers arrive before the stream body,
+        // so the full call still starts seconds before the preview finishes rendering.
+        const res = await fetch('/api/analyze', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: previewBody,
         });
-        const fullFetchP = fetch('/api/analyze-full', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: fullBody,
-        });
 
-        const res = await previewFetchP;
+        const authToken = res.headers.get('X-Braggy-Token') || '';
+        if (authToken) {
+          try { localStorage.setItem('braggy_token', authToken); } catch (e) {}
+        }
+
+        const fullFetchP = res.ok
+          ? fetch('/api/analyze-full', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                resume,
+                ...(authToken && { auth_token: authToken }),
+                ...(DEV_KEY && { dev_key: DEV_KEY }),
+              }),
+            })
+          : Promise.resolve(null);
 
         if (res.status === 429) {
           document.getElementById('loading-state').classList.remove('show');

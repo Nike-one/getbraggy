@@ -3,6 +3,7 @@
 // API key is read from process.env.ANTHROPIC_API_KEY (set in Vercel dashboard).
 
 import { isDisposableEmail } from './_disposable-domains.js';
+import { signToken, sseToTextStream } from './_lib.js';
 
 // Daily platform-wide cap — protects against viral spikes
 const DAILY_CAP = 30;
@@ -322,46 +323,18 @@ export default async function handler(req) {
 
     // Stream Anthropic SSE → extract text deltas → pipe to client as plain text.
     // Client accumulates the full JSON string, then parses it when the stream ends.
-    // Buffer across chunks so SSE lines split at chunk boundaries are not dropped.
-    const encoder = new TextEncoder();
-    const decoder = new TextDecoder();
-    let sseBuffer = '';
-    const { readable, writable } = new TransformStream({
-      transform(chunk, controller) {
-        sseBuffer += decoder.decode(chunk, { stream: true });
-        const lines = sseBuffer.split('\n');
-        sseBuffer = lines.pop() ?? ''; // keep incomplete last line in buffer
-        for (const line of lines) {
-          if (!line.startsWith('data: ')) continue;
-          const jsonStr = line.slice(6).trim();
-          if (!jsonStr || jsonStr === '[DONE]') continue;
-          try {
-            const event = JSON.parse(jsonStr);
-            if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta') {
-              controller.enqueue(encoder.encode(event.delta.text));
-            }
-          } catch {}
-        }
-      },
-      flush(controller) {
-        // process any remaining buffered line
-        if (sseBuffer.startsWith('data: ')) {
-          const jsonStr = sseBuffer.slice(6).trim();
-          try {
-            const event = JSON.parse(jsonStr);
-            if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta') {
-              controller.enqueue(encoder.encode(event.delta.text));
-            }
-          } catch {}
-        }
-      },
-    });
+    //
+    // This request passed all abuse checks, so issue a signed token in the headers.
+    // The client passes it to /api/analyze-full and /api/rewrite-bullets, which
+    // require it — that's how those endpoints inherit this one's abuse protection.
+    const authToken = await signToken();
 
-    aiRes.body.pipeTo(writable).catch(() => {});
-
-    return new Response(readable, {
+    return new Response(sseToTextStream(aiRes.body), {
       status: 200,
-      headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+        ...(authToken && { 'X-Braggy-Token': authToken }),
+      },
     });
   } catch (e) {
     console.error('handler error', e);

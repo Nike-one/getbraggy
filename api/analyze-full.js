@@ -3,6 +3,8 @@
 // Returns: rewritten_resume, bullet_issues, rewrites, market_reality_full,
 //          one_big_fix, salary_positioning, skill_gaps, recruiter_verdict.
 
+import { verifyToken, sseToTextStream, json } from './_lib.js';
+
 export const config = { runtime: 'edge' };
 
 const SYSTEM_PROMPT_FULL = `You are Braggy's deep-analysis pass. The user pasted a résumé and a parallel call has already scored it and called out red flags. Your job is the long-form rewrite and the structured output a recruiter would actually skim. Return JSON only, no preamble, no markdown.
@@ -36,6 +38,7 @@ const SYSTEM_PROMPT_FULL = `You are Braggy's deep-analysis pass. The user pasted
     - For Skills, regroup into Jake's-Resume-style categories: Languages, Frameworks, Developer Tools, Libraries, Databases, Cloud. Use only categories that apply. Keep the user's actual skills — don't add new ones.
     - Plain ASCII throughout. "Resume" not "Résumé". No ₹ symbol. No em-dashes (use hyphens).
     - Each slot is OPTIONAL — leave as empty array if no data. Do not invent a section just to fill it.
+    - NEVER use placeholder syntax in rewritten_resume bullets. No \`{anything}\`, no \`{count}\`, no \`{number}\`, no \`~{x}\`. Curly braces are reserved for rewritten_template inside bullet_issues only. If you don't have a real number, write the qualitative version instead.
 
 8. BULLET ISSUES: Identify 3-5 bullets in rewritten_resume still weak after your rewrite. Each entry tells the editor which bullet to flag. NEVER more than 5. Rank worst-first. Empty array if fewer than 3 weak bullets.
 
@@ -120,6 +123,17 @@ export default async function handler(req) {
     );
   }
 
+  // Auth gate — this endpoint has no Turnstile/rate-limit layer of its own.
+  // It only serves requests carrying a token issued by /api/analyze, which DID
+  // pass all abuse checks. Without this, the endpoint is open to direct curl
+  // abuse at max_tokens 6000. Dev key bypasses, same as everywhere else.
+  if (!isDev && !(await verifyToken(body.auth_token))) {
+    return json(401, {
+      error: 'unauthorized',
+      message: 'Session expired. Run the analysis again from the home page.',
+    });
+  }
+
   const { resume } = body;
   if (!resume || resume.length < 100) {
     return new Response(JSON.stringify({ error: 'Résumé required' }), {
@@ -163,44 +177,8 @@ export default async function handler(req) {
       );
     }
 
-    // Stream SSE → text deltas (same pattern as analyze.js)
-    const encoder = new TextEncoder();
-    const decoder = new TextDecoder();
-    let sseBuffer = '';
-    const { readable, writable } = new TransformStream({
-      transform(chunk, controller) {
-        sseBuffer += decoder.decode(chunk, { stream: true });
-        const lines = sseBuffer.split('\n');
-        sseBuffer = lines.pop() ?? '';
-        for (const line of lines) {
-          if (!line.startsWith('data: ')) continue;
-          const jsonStr = line.slice(6).trim();
-          if (!jsonStr || jsonStr === '[DONE]') continue;
-          try {
-            const event = JSON.parse(jsonStr);
-            if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta') {
-              controller.enqueue(encoder.encode(event.delta.text));
-            }
-          } catch {}
-        }
-      },
-      flush(controller) {
-        sseBuffer += decoder.decode();
-        if (sseBuffer.startsWith('data: ')) {
-          const jsonStr = sseBuffer.slice(6).trim();
-          try {
-            const event = JSON.parse(jsonStr);
-            if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta') {
-              controller.enqueue(encoder.encode(event.delta.text));
-            }
-          } catch {}
-        }
-      },
-    });
-
-    aiRes.body.pipeTo(writable).catch(() => {});
-
-    return new Response(readable, {
+    // Stream SSE → text deltas (shared transform, same pattern as analyze.js)
+    return new Response(sseToTextStream(aiRes.body), {
       status: 200,
       headers: { 'Content-Type': 'text/plain; charset=utf-8' },
     });

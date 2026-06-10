@@ -4,6 +4,8 @@
 //                             rewritten_template, suggested_rewrite, ...}], dev_key? }
 // Returns: { bullets: [{id, rewritten}] }
 
+import { verifyToken } from './_lib.js';
+
 export const config = {
   runtime: 'edge',
 };
@@ -35,6 +37,19 @@ export default async function handler(req) {
     return new Response(
       JSON.stringify({ error: 'capacity', message: "We're at capacity right now. Try again soon." }),
       { status: 503, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+
+  // Auth gate — only serve requests carrying a token issued by /api/analyze,
+  // which ran the full abuse layer (Turnstile, IP/fingerprint limits, daily cap).
+  // Stops direct curl abuse of this endpoint. Dev key bypasses, same as everywhere.
+  if (!isDev && !(await verifyToken(body.auth_token))) {
+    return new Response(
+      JSON.stringify({
+        error: 'unauthorized',
+        message: 'Session expired. Run the analysis again from the home page.',
+      }),
+      { status: 401, headers: { 'Content-Type': 'application/json' } }
     );
   }
 
@@ -72,7 +87,8 @@ Rules:
 - Start with a strong, plain action verb — vary verbs across bullets
 - Use ONLY information from the original bullet or the user_answer — do not invent facts, companies, or activities
 - For "estimate_needed": take the template, replace the {placeholder} token with the user_answer naturally (e.g. if user said "12", write "~12" if it's a count)
-- For "weak_rewrite": use the user_answer as the new bullet text; polish grammar and punch only — do not add new facts
+- For "weak_rewrite": user_answer is the user's new direction for this bullet. Write a complete, professional resume bullet from scratch using their input as the core content. You may restructure entirely — the user_answer replaces the original intent, not just polishes it. Do not add facts not implied by user_answer or original bullet.
+- For "user_directed": user is editing this bullet manually with specific instructions in user_answer. Apply their instructions EXACTLY. Do NOT invent any metric, tool, framework, company, scope, or outcome that is not present in original_text or user_answer. If their instruction is vague, make minimal changes — better to be too literal than to fabricate. Keep the bullet's core meaning unless they explicitly ask to change it.
 - Numbers: use tilde prefix ~N for approximations the user provided (e.g. ~12, ~500K)
 - Human voice: no "streamlined", "optimized", "leveraged", "spearheaded", "synergized", "facilitated". Use "Cut" not "Reduced". "Ran" not "Managed". "Shipped" not "Delivered".
 - Fragments OK. No over-explaining. Trust the reader.
