@@ -7,8 +7,13 @@
   <meta name="robots" content="noindex" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin />
+  <!-- Fonts load async (media swap trick) so CSS fetch doesn't block first paint.
+       Inter 300/800 dropped — unused. display=swap shows system text immediately. -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" /></noscript>
+  <!-- jsPDF loads on demand via ensureJsPDF() (warmed while idle after load) -->
+
   <style>
     :root {
       --bg: #0a0a0a;
@@ -351,6 +356,27 @@
     // If expired (24h), the API returns 401 with a "run the analysis again" message.
     const AUTH_TOKEN = (() => {
       try { return localStorage.getItem('braggy_token') || ''; } catch { return ''; }
+    })();
+
+    // jsPDF on-demand loader — kept out of <head> so it doesn't compete with
+    // first paint on mobile. Warmed while idle below; download awaits it.
+    let _jspdfPromise = null;
+    function ensureJsPDF() {
+      if (window.jspdf && window.jspdf.jsPDF) return Promise.resolve();
+      if (_jspdfPromise) return _jspdfPromise;
+      _jspdfPromise = new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+        s.onload = () => resolve();
+        s.onerror = () => { _jspdfPromise = null; reject(new Error('jsPDF load failed')); };
+        document.head.appendChild(s);
+      });
+      return _jspdfPromise;
+    }
+    (function warmJsPDF() {
+      const kick = () => ensureJsPDF().catch(() => {});
+      if ('requestIdleCallback' in window) requestIdleCallback(kick, { timeout: 4000 });
+      else setTimeout(kick, 1500);
     })();
 
     // Must be initialized before bootEditor() runs — renderResumePreview reads it.
@@ -1150,10 +1176,12 @@
       }
     }
 
-    function generateAndDownloadPDF() {
+    async function generateAndDownloadPDF() {
       if (!analysisData?.rewritten_resume) return;
-      if (!window.jspdf || !window.jspdf.jsPDF) {
-        alert('PDF library still loading. Try again in a moment.');
+      try {
+        await ensureJsPDF();
+      } catch {
+        alert('Could not load the PDF library. Check your connection and try again.');
         return;
       }
       const r = analysisData.rewritten_resume;

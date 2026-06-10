@@ -1,12 +1,28 @@
 <!DOCTYPE html>
 <html lang="en-IN">
 <head>
-  <!-- Google Tag Manager -->
-  <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-  })(window,document,'script','dataLayer','GTM-5NP232KD');</script>
+  <!-- Google Tag Manager — deferred until first interaction (or 3.5s) so it doesn't
+       compete with fonts/Turnstile for bandwidth on mobile first paint. dataLayer
+       stub exists immediately, so early dataLayer.push() calls queue and flush
+       when gtm.js arrives. -->
+  <script>
+  window.dataLayer = window.dataLayer || [];
+  (function(){
+    var loaded = false;
+    function loadGTM(){
+      if (loaded) return; loaded = true;
+      window.dataLayer.push({'gtm.start': new Date().getTime(), event: 'gtm.js'});
+      var j = document.createElement('script');
+      j.async = true;
+      j.src = 'https://www.googletagmanager.com/gtm.js?id=GTM-5NP232KD';
+      document.head.appendChild(j);
+    }
+    ['pointerdown','keydown','scroll','touchstart'].forEach(function(e){
+      addEventListener(e, loadGTM, { passive: true, once: true });
+    });
+    setTimeout(loadGTM, 3500);
+  })();
+  </script>
   <!-- End Google Tag Manager -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -39,7 +55,12 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <!-- Warm the CDN connection for lazy-loaded libs (jsPDF, pdf.js, mammoth) -->
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin />
+  <!-- Fonts load async (media swap trick) so CSS fetch doesn't block first paint.
+       Inter 300/800 dropped — unused. display=swap shows system text immediately. -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" /></noscript>
 
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 
@@ -1857,7 +1878,7 @@
       color: var(--accent);
       font-size: 1.3rem;
       line-height: 1;
-      font-weight: 300;
+      font-weight: 400;
       transition: transform 0.2s;
     }
     .faq details[open] summary::after {
@@ -2096,7 +2117,8 @@
     ]
   }
   </script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+  <!-- jsPDF loads on demand via ensureJsPDF() — only needed at PDF download,
+       no reason to ship ~120KB gz to every mobile visitor on first paint. -->
 </head>
 <body>
 <!-- Google Tag Manager (noscript) -->
@@ -2619,6 +2641,29 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       return out;
     }
 
+    // jsPDF on-demand loader. Not in <head> — it's only needed at download click,
+    // and shipping it upfront costs every mobile visitor ~120KB gz on first paint.
+    // warmJsPDF() is called when results render, so by the time the user reaches
+    // the download button the library is almost always already cached.
+    let _jspdfPromise = null;
+    function ensureJsPDF() {
+      if (window.jspdf && window.jspdf.jsPDF) return Promise.resolve();
+      if (_jspdfPromise) return _jspdfPromise;
+      _jspdfPromise = new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+        s.onload = () => resolve();
+        s.onerror = () => { _jspdfPromise = null; reject(new Error('jsPDF load failed')); };
+        document.head.appendChild(s);
+      });
+      return _jspdfPromise;
+    }
+    function warmJsPDF() {
+      const kick = () => ensureJsPDF().catch(() => {});
+      if ('requestIdleCallback' in window) requestIdleCallback(kick, { timeout: 4000 });
+      else setTimeout(kick, 1500);
+    }
+
     const DEV_KEY = (() => {
       try { return localStorage.getItem('braggy_dev_key') || ''; } catch { return ''; }
     })();
@@ -2925,6 +2970,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     }
 
     function renderResults(data) {
+      // Results visible → download click is likely next. Fetch jsPDF while idle.
+      warmJsPDF();
       analysisData = data;
       try { localStorage.setItem('braggy_analysis', JSON.stringify(data)); } catch (e) { /* quota or private mode — non-fatal */ }
 
@@ -3192,9 +3239,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       const btn = document.getElementById('download-btn');
       const meta = document.getElementById('download-card-meta');
 
-      if (!window.jspdf || !window.jspdf.jsPDF) {
+      try {
+        await ensureJsPDF();
+      } catch {
         meta.classList.remove('success');
-        meta.textContent = 'PDF library still loading. Try again in a moment.';
+        meta.textContent = 'Could not load the PDF library. Check your connection and try again.';
         return;
       }
 
