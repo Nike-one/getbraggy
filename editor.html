@@ -608,6 +608,14 @@
     }
 
     function commitBullet(issue, text) {
+      // Last line of defense: no {placeholder} token ever lands in the résumé,
+      // regardless of which path produced the text (template fill, AI rewrite,
+      // user edit). Refuse the commit if scrubbing leaves nothing.
+      text = scrubPlaceholderTokens(text);
+      if (!text) {
+        console.error('commitBullet: text empty after placeholder scrub', issue);
+        return false;
+      }
       const section = analysisData.rewritten_resume?.[issue.section];
       if (!Array.isArray(section)) {
         console.error('commitBullet: section not array', issue.section, issue);

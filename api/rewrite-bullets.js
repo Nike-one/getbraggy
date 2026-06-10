@@ -92,6 +92,7 @@ Rules:
 - Numbers: use tilde prefix ~N for approximations the user provided (e.g. ~12, ~500K)
 - Human voice: no "streamlined", "optimized", "leveraged", "spearheaded", "synergized", "facilitated". Use "Cut" not "Reduced". "Ran" not "Managed". "Shipped" not "Delivered".
 - Fragments OK. No over-explaining. Trust the reader.
+- NEVER output curly-brace tokens. No \`{placeholder}\`, \`{count}\`, \`{student_count}\` or any \`{...}\` in the rewritten text. If you lack a value for a template slot, write the bullet without it (qualitative version) instead of leaving the token.
 
 Return ONLY valid JSON with this exact shape — no markdown, no preamble:
 {"bullets":[{"id":"<id>","rewritten":"<final bullet text>"}]}
@@ -146,7 +147,30 @@ ${bulletDescriptions}`;
       });
     }
 
-    return new Response(JSON.stringify({ bullets: parsed.bullets }), {
+    // Defensive: the model occasionally echoes the template with {placeholder}
+    // tokens unfilled. Fill the first token with the user's number when we have
+    // one, strip whatever remains, and tidy dangling connectors — a literal
+    // "{student_count}" must never reach a résumé.
+    const byId = new Map(bullets.map(b => [b.id, b]));
+    const cleaned = parsed.bullets.map(out => {
+      if (!out || typeof out.rewritten !== 'string') return out;
+      let text = out.rewritten;
+      const src = byId.get(out.id);
+      const answer = src && typeof src.user_answer === 'string' ? src.user_answer.trim() : '';
+      if (/~?\{[^}]+\}/.test(text) && /^~?\d/.test(answer)) {
+        const fmt = (answer.startsWith('~') || answer.endsWith('+')) ? answer : `~${answer}`;
+        text = text.replace(/~?\{[^}]+\}/, fmt);
+      }
+      text = text
+        .replace(/~?\{[^}]+\}/g, '')
+        .replace(/\s+(from|to|of|by|with)\s*([,.)\]]|$)/gi, '$2')
+        .replace(/\s{2,}/g, ' ')
+        .replace(/\s+([,.)])/g, '$1')
+        .trim();
+      return { ...out, rewritten: text };
+    });
+
+    return new Response(JSON.stringify({ bullets: cleaned }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });

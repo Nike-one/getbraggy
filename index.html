@@ -2641,6 +2641,31 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       return out;
     }
 
+    // Defensive scrub: LLM occasionally leaks `{placeholder}` / `~{x}` syntax into
+    // rewritten_resume bullets. Strip before the PDF so a recruiter never sees
+    // a literal "{student_count}". (Editor has the same scrub on load.)
+    function scrubPlaceholderTokens(s) {
+      if (typeof s !== 'string') return s;
+      return s
+        .replace(/~?\{[^}]+\}/g, '')
+        .replace(/\s+(from|to|of|by|with)\s*([,.)\]]|$)/gi, '$2')
+        .replace(/\s{2,}/g, ' ')
+        .replace(/\s+([,.)])/g, '$1')
+        .trim();
+    }
+    function scrubResumeBullets(r) {
+      if (!r) return r;
+      ['experience', 'projects', 'extracurricular'].forEach(section => {
+        if (!Array.isArray(r[section])) return;
+        r[section].forEach(entry => {
+          if (Array.isArray(entry?.bullets)) {
+            entry.bullets = entry.bullets.map(scrubPlaceholderTokens).filter(Boolean);
+          }
+        });
+      });
+      return r;
+    }
+
     // A project "link" that's really the candidate's profile URL (github.com/<user>,
     // linkedin.com/in/<user>) misleads recruiters expecting the repo — and the profile
     // already appears in the contact line. Drop it; keep only real project URLs.
@@ -3269,6 +3294,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         meta.textContent = 'Rewritten resume data missing. Please re-run the analysis.';
         return;
       }
+      scrubResumeBullets(r);
 
       btn.disabled = true;
       const label = btn.querySelector('.download-btn-label');
