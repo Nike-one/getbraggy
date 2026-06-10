@@ -128,25 +128,6 @@
     .issue-btn.accent { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
     .issue-btn.accent:hover { background: var(--accent); color: #0a0a0a; }
 
-    .fix-all-bar {
-      padding: 1.5rem 0 0.5rem;
-    }
-    .fix-all-btn {
-      width: 100%;
-      padding: 0.85rem 1rem;
-      background: linear-gradient(135deg, #ff6b35 0%, #f97316 100%);
-      color: #0a0a0a; border: none; border-radius: 10px; cursor: pointer;
-      font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; font-weight: 600;
-      letter-spacing: 0.05em;
-    }
-    .fix-all-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-    .fix-all-success {
-      background: var(--green-soft); border: 1px solid var(--green);
-      color: var(--green); padding: 0.7rem 0.9rem; border-radius: 8px;
-      font-size: 0.85rem; text-align: center; margin-top: 0.6rem;
-      display: none;
-    }
-    .fix-all-success.show { display: block; }
 
     .all-done-state {
       display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -192,8 +173,28 @@
       cursor: pointer;
       transition: background 0.15s;
     }
-    .issue-bullet:hover { background: rgba(255,107,53,0.08); }
     .issue-bullet.resolved { border-bottom-color: #22c55e; }
+
+    /* Any clickable bullet — base style */
+    .bullet-editable { cursor: pointer; transition: background 0.15s; }
+
+    /* Hover-only affordances (mouse devices) */
+    @media (hover: hover) {
+      .issue-bullet:hover { background: rgba(255,107,53,0.08); }
+      li.bullet-editable:not(.issue-bullet):hover { background: rgba(120,120,120,0.08); }
+    }
+
+    /* Touch devices — give plain bullets a persistent dotted underline so users
+       can see they're tappable (no hover = no other affordance). */
+    @media (hover: none) {
+      li.bullet-editable:not(.issue-bullet) {
+        border-bottom: 1px dashed rgba(120,120,120,0.45);
+      }
+      /* Tap feedback — brief flash on press */
+      .bullet-editable:active { background: rgba(255,107,53,0.12); }
+      /* Hide tooltip entirely — it's flaky on touch (shows on first tap, blocks second) */
+      .issue-tooltip { display: none !important; }
+    }
 
     /* Hover tooltip */
     .issue-tooltip {
@@ -280,11 +281,6 @@
           <div class="all-done-sub">Ready to download</div>
           <button class="header-btn primary all-done-cta" onclick="onDownloadClick()">Download PDF →</button>
         </div>
-        <div class="fix-all-bar">
-          <button class="fix-all-btn" id="fix-all-btn" onclick="fixAll()" disabled>Fix All in One Go</button>
-          <div class="fix-all-success" id="fix-all-success">Resume updated — ready to download</div>
-          <div id="fix-all-error" style="display:none; color:#ef4444; font-size:0.82rem; margin-top:0.5rem; text-align:center;"></div>
-        </div>
       </aside>
       <section class="pane pane-right" id="pane-right">
         <div class="resume-paper" id="resume-paper"></div>
@@ -321,8 +317,40 @@
       if (raw) analysisData = JSON.parse(raw);
     } catch (e) { analysisData = null; }
 
+    // Defensive scrub: LLM occasionally leaks `{placeholder}` / `~{x}` syntax into
+    // rewritten_resume bullets. Strip it so users don't see raw tokens in preview.
+    function scrubPlaceholderTokens(s) {
+      if (typeof s !== 'string') return s;
+      // Remove ~{anything}, {anything}, plus any stray " to " / " from " connectors left dangling
+      return s
+        .replace(/~?\{[^}]+\}/g, '')
+        .replace(/\s+(from|to|of|by|with)\s*([,.)\]]|$)/gi, '$2')
+        .replace(/\s{2,}/g, ' ')
+        .replace(/\s+([,.)])/g, '$1')
+        .trim();
+    }
+    function scrubResume(r) {
+      if (!r) return r;
+      ['experience', 'projects', 'extracurricular'].forEach(section => {
+        if (!Array.isArray(r[section])) return;
+        r[section].forEach(entry => {
+          if (Array.isArray(entry?.bullets)) {
+            entry.bullets = entry.bullets.map(scrubPlaceholderTokens).filter(Boolean);
+          }
+        });
+      });
+      return r;
+    }
+    if (analysisData?.rewritten_resume) scrubResume(analysisData.rewritten_resume);
+
     const DEV_KEY = (() => {
       try { return localStorage.getItem('braggy_dev_key') || ''; } catch { return ''; }
+    })();
+
+    // Issued by /api/analyze alongside the analysis; required by /api/rewrite-bullets.
+    // If expired (24h), the API returns 401 with a "run the analysis again" message.
+    const AUTH_TOKEN = (() => {
+      try { return localStorage.getItem('braggy_token') || ''; } catch { return ''; }
     })();
 
     // Must be initialized before bootEditor() runs — renderResumePreview reads it.
@@ -374,13 +402,23 @@
         const card = ev.target.closest && ev.target.closest('.issue-card');
         if (!card) return;
         const id = card.getAttribute('data-issue-id');
-        if (!id) return;
-        if (ev.target.matches('input[data-role="estimate-input"]') && ev.key === 'Enter') {
-          ev.preventDefault();
-          applyIssue(id);
-        } else if (ev.target.matches('textarea[data-role="rewrite-text"]') && ev.key === 'Enter' && (ev.metaKey || ev.ctrlKey)) {
-          ev.preventDefault();
-          acceptRewrite(id);
+        const userKey = card.getAttribute('data-user-rewrite-key');
+        if (id) {
+          if (ev.target.matches('input[data-role="estimate-input"]') && ev.key === 'Enter') {
+            ev.preventDefault();
+            applyIssue(id);
+          } else if (ev.target.matches('textarea[data-role="rewrite-text"]') && ev.key === 'Enter' && (ev.metaKey || ev.ctrlKey)) {
+            ev.preventDefault();
+            acceptRewrite(id);
+          }
+        } else if (userKey) {
+          if (ev.target.matches('textarea[data-role="user-rewrite-input"]') && ev.key === 'Enter' && (ev.metaKey || ev.ctrlKey)) {
+            ev.preventDefault();
+            submitUserRewrite(userKey);
+          } else if (ev.target.matches('textarea[data-role="user-rewrite-suggested"]') && ev.key === 'Enter' && (ev.metaKey || ev.ctrlKey)) {
+            ev.preventDefault();
+            acceptUserRewrite(userKey);
+          }
         }
       });
 
@@ -398,8 +436,6 @@
       const headerEl = document.getElementById('issues-header');
       const subheadEl = document.getElementById('issues-subhead');
       const listEl = document.getElementById('issue-list');
-      const fixAllBtn = document.getElementById('fix-all-btn');
-
       // Skip cards the user already resolved in a prior session
       const pending = issues.filter(i => !resolved[i.id]);
 
@@ -414,9 +450,6 @@
         headerEl.textContent = 'Your resume looks strong';
         subheadEl.textContent = 'No high-impact edits flagged. You can still tweak and re-download.';
         listEl.innerHTML = '';
-        fixAllBtn.textContent = 'Download PDF';
-        fixAllBtn.disabled = false;
-        fixAllBtn.onclick = onDownloadClick;
         return;
       }
 
@@ -444,7 +477,7 @@
           bodyHtml = `
             <div class="issue-card-question">${escapeHtml(issue.question || 'Add a real number:')}</div>
             ${contextHtml}
-            <input type="text" class="issue-input" data-role="estimate-input" placeholder="e.g. 12" aria-label="${escapeHtml(issue.question || 'Estimate')}" />
+            <input type="text" class="issue-input" data-role="estimate-input" placeholder="e.g. 12, 500K, 50+" aria-label="${escapeHtml(issue.question || 'Estimate')}" />
             <div class="issue-card-actions">
               <button class="issue-btn accent" data-role="apply" onclick="applyIssue('${issue.id}')">Apply</button>
               <button class="issue-btn" data-role="skip" onclick="skipIssue('${issue.id}')">Skip</button>
@@ -470,9 +503,6 @@
         listEl.appendChild(card);
       });
 
-      fixAllBtn.disabled = false;
-      fixAllBtn.textContent = 'Fix All in One Go';
-      fixAllBtn.onclick = fixAll;
     }
 
     function markCardResolved(id) {
@@ -514,13 +544,14 @@
 
     let allDoneShown = false;
     function showAllDone() {
-      if (allDoneShown) return;
+      const allDoneEl = document.getElementById('all-done-state');
+      // If hidden (e.g. user opened a user-rewrite card then closed it), re-show.
+      if (allDoneShown && allDoneEl && allDoneEl.style.display !== 'none') return;
       allDoneShown = true;
       document.getElementById('issue-list').style.display = 'none';
-      document.querySelector('.fix-all-bar').style.display = 'none';
       document.getElementById('issues-header').textContent = '';
       document.getElementById('issues-subhead').textContent = '';
-      document.getElementById('all-done-state').style.display = 'flex';
+      if (allDoneEl) allDoneEl.style.display = 'flex';
 
       // Mobile (<900px): single-column layout puts left pane above resume.
       // After done, user is stuck at the top — pull them down to the updated resume.
@@ -534,13 +565,23 @@
 
     function commitBullet(issue, text) {
       const section = analysisData.rewritten_resume?.[issue.section];
-      if (!Array.isArray(section)) return;
+      if (!Array.isArray(section)) {
+        console.error('commitBullet: section not array', issue.section, issue);
+        return false;
+      }
       const entry = section[issue.entry_index];
-      if (!entry || !Array.isArray(entry.bullets)) return;
-      if (issue.bullet_index < 0 || issue.bullet_index >= entry.bullets.length) return;
+      if (!entry || !Array.isArray(entry.bullets)) {
+        console.error('commitBullet: entry/bullets invalid', issue.entry_index, entry);
+        return false;
+      }
+      if (issue.bullet_index < 0 || issue.bullet_index >= entry.bullets.length) {
+        console.error('commitBullet: bullet_index OOB', issue.bullet_index, entry.bullets.length);
+        return false;
+      }
       entry.bullets[issue.bullet_index] = text;
       try { localStorage.setItem('braggy_analysis', JSON.stringify(analysisData)); } catch {}
       renderResumePreview();
+      return true;
     }
 
     function applyIssue(id) {
@@ -549,18 +590,46 @@
       const input = card.querySelector('input[data-role="estimate-input"]');
       if (!input) return;
       const value = input.value.trim();
-      if (!value) {
+
+      function showInputError(msg) {
         input.focus();
         input.style.borderColor = 'var(--accent)';
+        const errEl = card.querySelector('.issue-card-error') || (() => {
+          const d = document.createElement('div');
+          d.className = 'issue-card-error';
+          d.style.cssText = 'color:#ef4444;font-size:0.82rem;margin-top:0.4rem;';
+          card.querySelector('.issue-card-actions').after(d);
+          return d;
+        })();
+        errEl.textContent = msg;
+      }
+
+      if (!value) {
+        showInputError('Enter a number (e.g. 12, 500K, 40%, 3-5).');
         return;
       }
+
+      // Accept: 12, 500K, 40%, 3-5, 50+, ~50 (with optional leading ~ and trailing +)
+      const isNumeric = /^~?\d+(\.\d+)?[KkMmBb%]?(\s*[-–]\s*\d+(\.\d+)?[KkMmBb%]?)?\+?$/.test(value);
+      if (!isNumeric) {
+        showInputError('This field is for numbers only (e.g. 12, 500K, 40%, 3-5, 50+). To edit the wording, use the suggestion card instead.');
+        return;
+      }
+
+      const errEl = card.querySelector('.issue-card-error');
+      if (errEl) errEl.remove();
+
       resolved[id] = { answer: value };
       persistResolved();
       markCardResolved(id);
       const issue = (analysisData.bullet_issues || []).find(i => i.id === id);
       if (issue) {
-        const fmt = /^\d+(\.\d+)?[KkMmBb%]?$/.test(value) ? `~${value}` : value;
-        const text = (issue.rewritten_template || issue.original_text).replace(/\{[^}]+\}/, fmt);
+        // Honor user intent: `+` = lower bound (no ~), bare number = approximation (add ~).
+        // Already-formatted (~12) passes through unchanged. Never combine ~ and +.
+        const hasPlus = value.endsWith('+');
+        const hasTilde = value.startsWith('~');
+        const fmt = (hasPlus || hasTilde) ? value : `~${value}`;
+        const text = (issue.rewritten_template || issue.original_text).replace(/~?\{[^}]+\}/, fmt);
         commitBullet(issue, text);
       }
     }
@@ -571,10 +640,7 @@
       const ta = card.querySelector('textarea[data-role="rewrite-text"]');
       if (!ta) return;
       const value = ta.value.trim();
-      if (!value) {
-        ta.focus();
-        return;
-      }
+      if (!value) { ta.focus(); return; }
       resolved[id] = { answer: value };
       persistResolved();
       markCardResolved(id);
@@ -586,6 +652,196 @@
       resolved[id] = { skipped: true };
       persistResolved();
       markCardResolved(id);
+    }
+
+    // ===== User-directed rewrite cards =====
+    // Triggered when user clicks any bullet on the right preview pane. Spawns a card
+    // that asks "what to change?", calls /api/rewrite-bullets with strict no-hallucinate
+    // mode, then shows the AI suggestion for accept/redo/skip.
+    function parseBulletKey(key) {
+      const [section, e, b] = (key || '').split('|');
+      return { section, entryIdx: parseInt(e, 10), bulletIdx: parseInt(b, 10) };
+    }
+
+    function getBulletAt(section, entryIdx, bulletIdx) {
+      const arr = analysisData?.rewritten_resume?.[section];
+      if (!Array.isArray(arr)) return '';
+      const entry = arr[entryIdx];
+      if (!entry || !Array.isArray(entry.bullets)) return '';
+      return entry.bullets[bulletIdx] || '';
+    }
+
+    function openUserRewriteCard(bulletKey, bulletText) {
+      // If a user-rewrite card already exists for this bullet, just focus it
+      const existing = document.querySelector(`.issue-card[data-user-rewrite-key="${cssEscape(bulletKey)}"]`);
+      const listEl = document.getElementById('issue-list');
+      const allDoneEl = document.getElementById('all-done-state');
+      // Show issue list panel (in case all-done is currently active)
+      listEl.style.display = '';
+      if (allDoneEl) allDoneEl.style.display = 'none';
+      document.getElementById('issues-header').textContent = 'Rewrite this bullet';
+      document.getElementById('issues-subhead').textContent = 'Tell me what to change. I will only use facts from the original or your input.';
+
+      if (existing) {
+        document.querySelectorAll('.issue-card.focused').forEach(el => el.classList.remove('focused'));
+        existing.classList.add('focused');
+        existing.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        existing.querySelector('textarea[data-role="user-rewrite-input"]')?.focus();
+        return;
+      }
+
+      const { section, entryIdx, bulletIdx } = parseBulletKey(bulletKey);
+      const original = bulletText || getBulletAt(section, entryIdx, bulletIdx);
+
+      const card = document.createElement('div');
+      card.className = 'issue-card focused';
+      card.setAttribute('data-user-rewrite-key', bulletKey);
+      card.innerHTML = `
+        <div class="issue-card-context">Current bullet</div>
+        <div class="issue-card-question" style="font-style:italic; color:var(--text-muted); margin-bottom:0.6rem;">"${escapeHtml(original)}"</div>
+        <div class="issue-card-question">What would you like to change?</div>
+        <textarea class="issue-textarea" data-role="user-rewrite-input" placeholder="e.g. add a metric, mention React, focus on leadership impact"></textarea>
+        <div class="issue-card-actions">
+          <button class="issue-btn accent" data-role="submit">Rewrite</button>
+          <button class="issue-btn" data-role="skip">Skip</button>
+        </div>`;
+
+      card.querySelector('[data-role="submit"]').addEventListener('click', () => submitUserRewrite(bulletKey));
+      card.querySelector('[data-role="skip"]').addEventListener('click', () => closeUserRewriteCard(bulletKey));
+
+      // Insert at top of list
+      document.querySelectorAll('.issue-card.focused').forEach(el => el.classList.remove('focused'));
+      listEl.prepend(card);
+      card.classList.add('focused');
+
+      const isMobile = window.matchMedia && window.matchMedia('(max-width: 900px)').matches;
+      if (isMobile) {
+        // Mobile: left pane is ABOVE preview in single-column. Page-scroll to card.
+        setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'center' }), 60);
+        // Don't auto-focus textarea on mobile — would pop keyboard before user sees the card
+      } else {
+        const paneLeft = document.getElementById('pane-left');
+        if (paneLeft) paneLeft.scrollTo({ top: 0, behavior: 'smooth' });
+        setTimeout(() => card.querySelector('textarea[data-role="user-rewrite-input"]')?.focus(), 80);
+      }
+    }
+
+    async function submitUserRewrite(bulletKey) {
+      const card = document.querySelector(`.issue-card[data-user-rewrite-key="${cssEscape(bulletKey)}"]`);
+      if (!card) return;
+      const ta = card.querySelector('textarea[data-role="user-rewrite-input"]');
+      if (!ta) return;
+      const instruction = ta.value.trim();
+      if (!instruction) { ta.focus(); ta.style.borderColor = 'var(--accent)'; return; }
+
+      const { section, entryIdx, bulletIdx } = parseBulletKey(bulletKey);
+      const original = getBulletAt(section, entryIdx, bulletIdx);
+
+      const submitBtn = card.querySelector('[data-role="submit"]');
+      if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Rewriting…'; }
+      const errPrev = card.querySelector('.issue-card-error');
+      if (errPrev) errPrev.remove();
+
+      try {
+        const res = await fetch('/api/rewrite-bullets', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            bullets: [{
+              id: bulletKey,
+              original_text: original,
+              issue_type: 'user_directed',
+              user_answer: instruction,
+              context: '',
+              suggested_rewrite: '',
+            }],
+            ...(AUTH_TOKEN && { auth_token: AUTH_TOKEN }),
+            ...(DEV_KEY && { dev_key: DEV_KEY }),
+          }),
+        });
+        let data = {};
+        try { data = await res.json(); } catch (_) {}
+        const rewritten = data.bullets?.[0]?.rewritten;
+        if (!res.ok || !rewritten) throw new Error(data.message || data.error || 'AI error. Try again.');
+
+        showUserRewriteSuggestion(bulletKey, instruction, rewritten);
+      } catch (e) {
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Rewrite'; }
+        const errEl = document.createElement('div');
+        errEl.className = 'issue-card-error';
+        errEl.style.cssText = 'color:#ef4444;font-size:0.82rem;margin-top:0.4rem;';
+        errEl.textContent = e.message || 'Something went wrong. Try again.';
+        card.querySelector('.issue-card-actions').after(errEl);
+      }
+    }
+
+    function showUserRewriteSuggestion(bulletKey, lastInstruction, suggestedText) {
+      const card = document.querySelector(`.issue-card[data-user-rewrite-key="${cssEscape(bulletKey)}"]`);
+      if (!card) return;
+      const { section, entryIdx, bulletIdx } = parseBulletKey(bulletKey);
+      const original = getBulletAt(section, entryIdx, bulletIdx);
+
+      card.innerHTML = `
+        <div class="issue-card-context">Current bullet</div>
+        <div class="issue-card-question" style="font-style:italic; color:var(--text-muted); margin-bottom:0.6rem;">"${escapeHtml(original)}"</div>
+        <div class="issue-card-context">Your instruction</div>
+        <div class="issue-card-question" style="color:var(--text-muted); margin-bottom:0.6rem;">${escapeHtml(lastInstruction)}</div>
+        <div class="issue-card-question">Suggested rewrite</div>
+        <textarea class="issue-textarea" data-role="user-rewrite-suggested">${escapeHtml(suggestedText)}</textarea>
+        <div class="issue-card-actions">
+          <button class="issue-btn accent" data-role="accept">Accept</button>
+          <button class="issue-btn" data-role="redo">Rewrite again</button>
+          <button class="issue-btn" data-role="skip">Skip</button>
+        </div>`;
+      card.querySelector('[data-role="accept"]').addEventListener('click', () => acceptUserRewrite(bulletKey));
+      card.querySelector('[data-role="redo"]').addEventListener('click', () => redoUserRewrite(bulletKey, lastInstruction));
+      card.querySelector('[data-role="skip"]').addEventListener('click', () => closeUserRewriteCard(bulletKey));
+    }
+
+    function acceptUserRewrite(bulletKey) {
+      const card = document.querySelector(`.issue-card[data-user-rewrite-key="${cssEscape(bulletKey)}"]`);
+      if (!card) return;
+      const ta = card.querySelector('textarea[data-role="user-rewrite-suggested"]');
+      if (!ta) return;
+      const finalText = ta.value.trim();
+      if (!finalText) { ta.focus(); return; }
+      const { section, entryIdx, bulletIdx } = parseBulletKey(bulletKey);
+      const ok = commitBullet({ section, entry_index: entryIdx, bullet_index: bulletIdx }, finalText);
+      if (!ok) {
+        const errEl = document.createElement('div');
+        errEl.className = 'issue-card-error';
+        errEl.style.cssText = 'color:#ef4444;font-size:0.82rem;margin-top:0.4rem;';
+        errEl.textContent = 'Could not place bullet.';
+        card.querySelector('.issue-card-actions').after(errEl);
+        return;
+      }
+      closeUserRewriteCard(bulletKey);
+    }
+
+    function redoUserRewrite(bulletKey, previousInstruction) {
+      const card = document.querySelector(`.issue-card[data-user-rewrite-key="${cssEscape(bulletKey)}"]`);
+      if (!card) return;
+      const { section, entryIdx, bulletIdx } = parseBulletKey(bulletKey);
+      const original = getBulletAt(section, entryIdx, bulletIdx);
+
+      card.innerHTML = `
+        <div class="issue-card-context">Current bullet</div>
+        <div class="issue-card-question" style="font-style:italic; color:var(--text-muted); margin-bottom:0.6rem;">"${escapeHtml(original)}"</div>
+        <div class="issue-card-question">What would you like to change?</div>
+        <textarea class="issue-textarea" data-role="user-rewrite-input">${escapeHtml(previousInstruction || '')}</textarea>
+        <div class="issue-card-actions">
+          <button class="issue-btn accent" data-role="submit">Rewrite</button>
+          <button class="issue-btn" data-role="skip">Skip</button>
+        </div>`;
+      card.querySelector('[data-role="submit"]').addEventListener('click', () => submitUserRewrite(bulletKey));
+      card.querySelector('[data-role="skip"]').addEventListener('click', () => closeUserRewriteCard(bulletKey));
+      setTimeout(() => card.querySelector('textarea[data-role="user-rewrite-input"]')?.focus(), 50);
+    }
+
+    function closeUserRewriteCard(bulletKey) {
+      const card = document.querySelector(`.issue-card[data-user-rewrite-key="${cssEscape(bulletKey)}"]`);
+      if (!card) return;
+      removeCard(card);
     }
 
     // CSS.escape polyfill for older Safari (rare but cheap)
@@ -608,18 +864,22 @@
       function bulletEl(text, section, entryIdx, bulletIdx) {
         const key = `${section}|${entryIdx}|${bulletIdx}`;
         const issue = issueIndex[key];
-        if (!issue) return `<li>${escapeHtml(text)}</li>`;
+        const keyAttr = `data-bullet-key="${escapeHtml(key)}"`;
+        if (!issue) {
+          // Plain bullet — still clickable for user-directed rewrite
+          return `<li class="bullet-editable" ${keyAttr}>${escapeHtml(text)}</li>`;
+        }
         const r = resolved[issue.id];
         if (!r) {
           // Still pending — orange underline, clickable to focus the card
-          return `<li class="issue-bullet" data-issue-id="${escapeHtml(issue.id)}">${escapeHtml(text)}</li>`;
+          return `<li class="issue-bullet bullet-editable" data-issue-id="${escapeHtml(issue.id)}" ${keyAttr}>${escapeHtml(text)}</li>`;
         }
         if (r.skipped) {
-          // User dismissed — render as plain bullet, no click affordance
-          return `<li>${escapeHtml(text)}</li>`;
+          // User dismissed — render as plain bullet, still re-editable
+          return `<li class="bullet-editable" ${keyAttr}>${escapeHtml(text)}</li>`;
         }
-        // Applied — green underline, no click affordance (card has been removed)
-        return `<li class="issue-bullet resolved">${escapeHtml(text)}</li>`;
+        // Applied — green underline, still re-editable
+        return `<li class="issue-bullet resolved bullet-editable" ${keyAttr}>${escapeHtml(text)}</li>`;
       }
 
       const parts = [];
@@ -715,6 +975,8 @@
       paper.innerHTML = parts.join('');
     }
     function wireTooltips() {
+      // Touch devices: skip tooltip wiring — CSS already hides it. Saves listeners.
+      if (window.matchMedia && window.matchMedia('(hover: none)').matches) return;
       const tooltip = document.getElementById('issue-tooltip');
       const paper = document.getElementById('resume-paper');
       const issues = Array.isArray(analysisData.bullet_issues) ? analysisData.bullet_issues : [];
@@ -763,10 +1025,16 @@
       const paneLeft = document.getElementById('pane-left');
 
       paper.addEventListener('click', (ev) => {
-        const target = ev.target.closest('.issue-bullet');
+        const target = ev.target.closest('.bullet-editable');
         if (!target) return;
-        const id = target.getAttribute('data-issue-id');
-        focusIssueCard(id);
+        const issueId = target.getAttribute('data-issue-id');
+        const bulletKey = target.getAttribute('data-bullet-key');
+        // Pending issue card exists? focus it. Otherwise open user-rewrite card.
+        if (issueId && document.querySelector(`.issue-card[data-issue-id="${cssEscape(issueId)}"]`)) {
+          focusIssueCard(issueId);
+        } else if (bulletKey) {
+          openUserRewriteCard(bulletKey, target.textContent || '');
+        }
       });
 
       function focusIssueCard(id) {
@@ -777,121 +1045,26 @@
         document.querySelectorAll('.issue-card.focused').forEach(el => el.classList.remove('focused'));
         card.classList.add('focused');
 
-        // Smooth scroll the LEFT pane so the card is visible. Use scrollTop math because
-        // scrollIntoView({block:'nearest'}) would scroll the whole window — we want the
-        // scroll contained to the left pane.
+        const isMobile = window.matchMedia && window.matchMedia('(max-width: 900px)').matches;
+        if (isMobile) {
+          // Single-column layout — page-scroll to card; don't auto-focus (keyboard pops too soon)
+          setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'center' }), 60);
+          return;
+        }
+
+        // Desktop: scroll inside the left pane and auto-focus the input.
         const cardTop = card.offsetTop;
         const cardHeight = card.offsetHeight;
         const paneHeight = paneLeft.clientHeight;
         const targetScroll = Math.max(0, cardTop - (paneHeight / 2) + (cardHeight / 2));
         paneLeft.scrollTo({ top: targetScroll, behavior: 'smooth' });
 
-        // Focus the relevant input so the user can type immediately.
         const issues = analysisData.bullet_issues || [];
         const issue = issues.find(i => i.id === id);
         if (issue?.issue_type === 'estimate_needed') {
           setTimeout(() => card.querySelector('input[data-role="estimate-input"]')?.focus(), 250);
         } else if (issue?.issue_type === 'weak_rewrite') {
           setTimeout(() => card.querySelector('textarea[data-role="rewrite-text"]')?.focus(), 250);
-        }
-      }
-    }
-    async function fixAll() {
-      const issues = Array.isArray(analysisData.bullet_issues) ? analysisData.bullet_issues : [];
-      const btn = document.getElementById('fix-all-btn');
-      const errorEl = document.getElementById('fix-all-error');
-
-      // Harvest any filled but not-yet-applied inputs
-      issues.forEach(issue => {
-        if (resolved[issue.id]) return;
-        const card = document.querySelector(`.issue-card[data-issue-id="${cssEscape(issue.id)}"]`);
-        if (!card) return;
-        if (issue.issue_type === 'estimate_needed') {
-          const v = (card.querySelector('input[data-role="estimate-input"]')?.value || '').trim();
-          if (v) resolved[issue.id] = { answer: v };
-        } else if (issue.issue_type === 'weak_rewrite') {
-          const v = (card.querySelector('textarea[data-role="rewrite-text"]')?.value || '').trim();
-          if (v) resolved[issue.id] = { answer: v };
-        }
-      });
-
-      // Build payload — only non-skipped issues that have an answer
-      const payload = issues
-        .filter(issue => resolved[issue.id] && !resolved[issue.id].skipped)
-        .map(issue => ({
-          id: issue.id,
-          section: issue.section,
-          entry_index: issue.entry_index,
-          bullet_index: issue.bullet_index,
-          original_text: issue.original_text,
-          issue_type: issue.issue_type,
-          user_answer: resolved[issue.id].answer,
-          context: issue.context || '',
-          rewritten_template: issue.rewritten_template || '',
-          suggested_rewrite: issue.suggested_rewrite || '',
-        }));
-
-      if (payload.length === 0) {
-        renderResumePreview();
-        document.getElementById('issue-list').innerHTML = '';
-        showAllDone();
-        return;
-      }
-
-      // Loading state
-      btn.disabled = true;
-      const prevLabel = btn.textContent;
-      btn.textContent = 'Rewriting with AI…';
-      if (errorEl) errorEl.style.display = 'none';
-
-      try {
-        const res = await fetch('/api/rewrite-bullets', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            bullets: payload,
-            ...(DEV_KEY && { dev_key: DEV_KEY }),
-          }),
-        });
-
-        let data = {};
-        try { data = await res.json(); } catch (_) {}
-
-        if (!res.ok || !data.bullets) {
-          throw new Error(data.error || `API error ${res.status}`);
-        }
-
-        // Apply LLM rewrites into analysisData.rewritten_resume
-        const r = analysisData.rewritten_resume;
-        const sectionMap = { experience: r.experience, projects: r.projects, extracurricular: r.extracurricular };
-
-        data.bullets.forEach(({ id, rewritten }) => {
-          const issue = issues.find(i => i.id === id);
-          if (!issue || !rewritten) return;
-          const arr = sectionMap[issue.section];
-          if (!Array.isArray(arr)) return;
-          const entry = arr[issue.entry_index];
-          if (!entry || !Array.isArray(entry.bullets)) return;
-          if (issue.bullet_index < 0 || issue.bullet_index >= entry.bullets.length) return;
-          entry.bullets[issue.bullet_index] = rewritten;
-        });
-
-        try { localStorage.setItem('braggy_analysis', JSON.stringify(analysisData)); } catch (e) {}
-
-        renderResumePreview();
-        document.getElementById('issue-list').innerHTML = '';
-        document.getElementById('pane-right').scrollTo({ top: 0, behavior: 'smooth' });
-
-        window.dataLayer = window.dataLayer || [];
-        dataLayer.push({ event: 'editor_fix_all', resolved_count: payload.length });
-
-        showAllDone();
-      } catch (e) {
-        btn.disabled = false;
-        btn.textContent = prevLabel;
-        if (errorEl) {
-          errorEl.textContent = e.message || 'Something went wrong. Try again.';
-          errorEl.style.display = 'block';
         }
       }
     }
